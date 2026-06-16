@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Pirátter – Kapitan Piratonozka</title>
   <link rel="icon" type="image/png" href="src/logo.png" />
-  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -259,6 +258,9 @@
       border-radius: 12px;
       font-size: 13px;
       line-height: 1.5;
+      word-break: break-word;
+      overflow-wrap: break-word;
+      white-space: pre-wrap;
     }
 
     .msg-left {
@@ -461,14 +463,10 @@
   function closeLightbox() { document.getElementById("lightbox").classList.remove("active"); }
 
   // ════════════════════════════════════════
-  //   EMAILJS NASTAVENÍ – doplň své hodnoty
+  //   FORMSPREE – vlož svůj endpoint
   // ════════════════════════════════════════
-  const EMAILJS_PUBLIC_KEY  = "TVUJ_PUBLIC_KEY";
-  const EMAILJS_SERVICE_ID  = "service_XXXXXXX";
-  const EMAILJS_TEMPLATE_ID = "template_XXXXXXX";
+  const FORMSPREE_URL = "https://formspree.io/f/mojzbkzn";
   // ════════════════════════════════════════
-
-  emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
 
   // ── CHAT ──
   const CHAT_KEY = "pirat_chat_extra";
@@ -511,9 +509,10 @@
     loadChat();
 
     // Pošli email s každou zprávou — tak víš co přítelkyně napsala
-    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
-      message: text,
-      time: new Date().toLocaleString("cs-CZ"),
+    fetch(FORMSPREE_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: text, time: new Date().toLocaleString("cs-CZ") }),
     }).catch(() => {});
   }
 
