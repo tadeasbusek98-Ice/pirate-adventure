@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Pirátter – Kapitan Piratonozka</title>
   <link rel="icon" type="image/png" href="src/logo.png" />
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -459,6 +460,16 @@
   function openLightbox()  { document.getElementById("lightbox").classList.add("active"); }
   function closeLightbox() { document.getElementById("lightbox").classList.remove("active"); }
 
+  // ════════════════════════════════════════
+  //   EMAILJS NASTAVENÍ – doplň své hodnoty
+  // ════════════════════════════════════════
+  const EMAILJS_PUBLIC_KEY  = "TVUJ_PUBLIC_KEY";
+  const EMAILJS_SERVICE_ID  = "service_XXXXXXX";
+  const EMAILJS_TEMPLATE_ID = "template_XXXXXXX";
+  // ════════════════════════════════════════
+
+  emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+
   // ── CHAT ──
   const CHAT_KEY = "pirat_chat_extra";
 
@@ -490,11 +501,20 @@
     const input = document.getElementById("chat-input");
     const text = input.value.trim();
     if (!text) return;
+
+    // Zprávy přítelkyně jsou bez pomlčky (levá strana, tmavá)
+    // Tvoje zprávy mají pomlčku (pravá strana, žlutá) — přidej "-" před text ručně
     const extra = JSON.parse(localStorage.getItem(CHAT_KEY) || "[]");
-    extra.push("- " + text);
+    extra.push(text);
     localStorage.setItem(CHAT_KEY, JSON.stringify(extra));
     input.value = "";
     loadChat();
+
+    // Pošli email s každou zprávou — tak víš co přítelkyně napsala
+    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+      message: text,
+      time: new Date().toLocaleString("cs-CZ"),
+    }).catch(() => {});
   }
 
   loadChat();
