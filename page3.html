@@ -471,15 +471,31 @@
   // ── CHAT ──
   const CHAT_KEY = "pirat_chat_extra";
 
+  const INITIAL_CHAT = [
+    "Ahoj Kapitane! Slysel sem, ze si ukradl ponozku Flamkusovi. Opravdu?",
+    "- Arrrr! To byl STRATEGICKY MANEVR, Levofusko! Nejvetsi piratsky cin od ukradnuti Flamkusovy cervene ponozky!",
+    "Hmm. A proc zrovna ponozka?",
+    "- Protoze jsem NEJVETSI PIRAT na sedmi moriach! A velkej pirat potrebuje velky... ee... ponozky. ARRR!",
+    "To dava smysl... ne.",
+    "- Ty nechapaas! Jednou budes vyprávět svym vnukum, ze jsi znal Kapitana Piratonozku osobne!",
+  ];
+
   async function loadChat() {
     const container = document.getElementById("chat-messages");
     container.innerHTML = "";
+
     let fileLines = [];
     try {
-      const res = await fetch("src/chat.txt?" + Date.now());
-      const text = await res.text();
-      fileLines = text.split("\n").map(l => l.trim()).filter(l => l.length > 0);
+      const res = await fetch("src/chat.txt");
+      if (res.ok) {
+        const text = await res.text();
+        const parsed = text.split("\n").map(l => l.trim()).filter(l => l.length > 0);
+        if (parsed.length > 0) fileLines = parsed;
+      }
     } catch(e) {}
+
+    // Pokud fetch selhal (lokální soubor, CORS), použij hardcoded zálohu
+    if (fileLines.length === 0) fileLines = INITIAL_CHAT;
 
     const extra = JSON.parse(localStorage.getItem(CHAT_KEY) || "[]");
     for (const line of [...fileLines, ...extra]) {
