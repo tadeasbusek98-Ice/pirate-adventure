@@ -316,6 +316,78 @@
     }
     .chat-input-row button:hover { background: #FFD966; }
 
+    /* ── MOBILNÍ TOGGLE TLAČÍTKA ── */
+    .mob-toggle {
+      display: none;
+      background: #3B1A00;
+      border: 1.5px solid #5C3310;
+      border-radius: 8px;
+      color: #FFD966;
+      font-size: 20px;
+      padding: 4px 10px;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .feed-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .feed-header-title { flex: 1; text-align: center; }
+
+    /* ── OVERLAY pro zavření panelů na mobilu ── */
+    .mob-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 90;
+    }
+    .mob-overlay.active { display: block; }
+
+    /* ── MOBILNÍ LAYOUT ── */
+    @media (max-width: 768px) {
+      body { overflow: hidden; }
+
+      .mob-toggle { display: block; }
+
+      .sidebar {
+        position: fixed;
+        left: 0; top: 0; bottom: 0;
+        z-index: 100;
+        transform: translateX(-100%);
+        transition: transform 0.25s ease;
+        width: 260px;
+        min-width: 0;
+      }
+      .sidebar.open { transform: translateX(0); }
+
+      .chat-panel {
+        position: fixed;
+        right: 0; top: 0; bottom: 0;
+        z-index: 100;
+        transform: translateX(100%);
+        transition: transform 0.25s ease;
+        width: 88vw;
+        min-width: 0;
+      }
+      .chat-panel.open { transform: translateX(0); }
+
+      .feed {
+        width: 100%;
+        padding: 14px 10px;
+        border-right: none;
+      }
+
+      .tweet { padding: 12px 12px; gap: 10px; }
+      .tweet-avatar { width: 38px; height: 38px; }
+      .tweet-name { font-size: 13px; }
+      .tweet-text { font-size: 13px; }
+
+      .new-tweet { padding: 10px 12px; }
+    }
+
     /* ── LIGHTBOX ── */
     .lightbox {
       display: none;
@@ -372,7 +444,11 @@
 
 <!-- STŘED – FEED -->
 <main class="feed">
-  <div class="feed-header">🏴‍☠️ Pirátter</div>
+  <div class="feed-header">
+    <button class="mob-toggle" onclick="togglePanel('sidebar')" title="Profil">☰</button>
+    <span class="feed-header-title">🏴‍☠️ Pirátter</span>
+    <button class="mob-toggle" onclick="togglePanel('chat')" title="Chat">💬</button>
+  </div>
 
   <div class="new-tweet">
     <input type="text" id="tweet-name" placeholder="Tvoje jméno..." value="Kapitan Piratonozka" />
@@ -454,12 +530,38 @@
   </div>
 </aside>
 
+<!-- MOBILNÍ OVERLAY -->
+<div class="mob-overlay" id="mob-overlay" onclick="closeAllPanels()"></div>
+
 <!-- LIGHTBOX -->
 <div class="lightbox" id="lightbox" onclick="closeLightbox()">
   <img src="src/profile.png" alt="Kapitan Piratonozka" />
 </div>
 
 <script>
+  function togglePanel(which) {
+    const sidebar = document.querySelector('.sidebar');
+    const chat    = document.querySelector('.chat-panel');
+    const overlay = document.getElementById('mob-overlay');
+    if (which === 'sidebar') {
+      const opening = !sidebar.classList.contains('open');
+      sidebar.classList.toggle('open');
+      chat.classList.remove('open');
+      overlay.classList.toggle('active', opening);
+    } else {
+      const opening = !chat.classList.contains('open');
+      chat.classList.toggle('open');
+      sidebar.classList.remove('open');
+      overlay.classList.toggle('active', opening);
+    }
+  }
+
+  function closeAllPanels() {
+    document.querySelector('.sidebar').classList.remove('open');
+    document.querySelector('.chat-panel').classList.remove('open');
+    document.getElementById('mob-overlay').classList.remove('active');
+  }
+
   if (sessionStorage.getItem("loggedIn") !== "true") {
     window.location.href = "index.html";
   }
