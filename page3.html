@@ -495,25 +495,41 @@
     document.getElementById("chat-messages").appendChild(div);
   }
 
+  // Buffer zpráv čekajících na odeslání emailem
+  let pendingEmailLines = [];
+  const BATCH_SIZE = 5; // pošli email po každých N zprávách
+
+  function flushEmail() {
+    if (pendingEmailLines.length === 0) return;
+    const body = pendingEmailLines.join("\n");
+    pendingEmailLines = [];
+    // sendBeacon funguje i při zavírání stránky
+    const data = new FormData();
+    data.append("message", body);
+    data.append("time", new Date().toLocaleString("cs-CZ"));
+    navigator.sendBeacon(FORMSPREE_URL, data);
+  }
+
+  // Pošli při zavření/opuštění stránky
+  window.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") flushEmail();
+  });
+
   function sendMsg() {
     const input = document.getElementById("chat-input");
     const text = input.value.trim();
     if (!text) return;
 
-    // Zprávy přítelkyně jsou bez pomlčky (levá strana, tmavá)
-    // Tvoje zprávy mají pomlčku (pravá strana, žlutá) — přidej "-" před text ručně
+    // Tvoje zprávy (pravá strana žlutá) mají "-" prefix
     const extra = JSON.parse(localStorage.getItem(CHAT_KEY) || "[]");
-    extra.push(text);
+    extra.push("- " + text);
     localStorage.setItem(CHAT_KEY, JSON.stringify(extra));
     input.value = "";
     loadChat();
 
-    // Pošli email s každou zprávou — tak víš co přítelkyně napsala
-    fetch(FORMSPREE_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: text, time: new Date().toLocaleString("cs-CZ") }),
-    }).catch(() => {});
+    // Přidej do bufferu a pošli po BATCH_SIZE zprávách
+    pendingEmailLines.push(new Date().toLocaleTimeString("cs-CZ") + ": " + text);
+    if (pendingEmailLines.length >= BATCH_SIZE) flushEmail();
   }
 
   loadChat();
