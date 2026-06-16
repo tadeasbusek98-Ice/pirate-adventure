@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pirate Adventure – Stránka 3</title>
+  <link rel="icon" type="image/png" href="logo.png" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #1a0a00;
+      font-family: Georgia, serif;
+      color: #FFD966;
+      text-align: center;
+      gap: 24px;
+    }
+    p { font-size: 22px; color: #FFB800; }
+    button {
+      padding: 14px 44px;
+      font-size: 18px;
+      font-family: Georgia, serif;
+      border: none;
+      border-radius: 10px;
+      background: #3B1A00;
+      color: #FFD966;
+      border: 2px solid #8B5E1A;
+      cursor: pointer;
+      margin-top: 16px;
+    }
+    button:hover { background: #5a2a00; }
+  </style>
+</head>
+<body>
+
+  <p>🚧 Tato stránka je zatím prázdná...</p>
+  <button onclick="window.location.href='adventure.html'">← Zpět</button>
+
+<script>
+  if (sessionStorage.getItem("loggedIn") !== "true") {
+    window.location.href = "index.html";
+  }
+</script>
+</body>
+</html>

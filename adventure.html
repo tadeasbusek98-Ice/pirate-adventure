@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pirate Adventure</title>
+  <link rel="icon" type="image/png" href="logo.png" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #1a0a00;
+      font-family: Georgia, serif;
+      color: #FFD966;
+      text-align: center;
+      gap: 24px;
+    }
+
+    .logo {
+      width: 160px;
+      height: 160px;
+      object-fit: contain;
+      border-radius: 28px;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.6);
+    }
+
+    h1 { font-size: 48px; text-shadow: 0 2px 8px #000; }
+    p  { font-size: 20px; color: #FFB800; }
+
+    .buttons {
+      display: flex;
+      gap: 24px;
+      margin-top: 16px;
+    }
+
+    button {
+      padding: 14px 44px;
+      font-size: 18px;
+      font-family: Georgia, serif;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    button:active { transform: scale(0.97); }
+
+    .btn-logout {
+      background: #3B1A00;
+      color: #FFD966;
+      border: 2px solid #8B5E1A;
+    }
+    .btn-logout:hover { background: #5a2a00; }
+
+    .btn-next {
+      background: #FFB800;
+      color: #3B1A00;
+      font-weight: bold;
+    }
+    .btn-next:hover { background: #FFD966; }
+  </style>
+</head>
+<body>
+
+  <img src="logo.png" alt="Pirate Logo" class="logo" />
+  <h1>Vítej, Kapitáne!</h1>
+  <p>Tady bude tvoje pirátské dobrodružství...</p>
+
+  <div class="buttons">
+    <button class="btn-logout" onclick="logout()">Odhlásit se</button>
+    <button class="btn-next" onclick="nextPage()">Dále →</button>
+  </div>
+
+<script>
+  if (sessionStorage.getItem("loggedIn") !== "true") {
+    window.location.href = "index.html";
+  }
+
+  function logout() {
+    sessionStorage.removeItem("loggedIn");
+    window.location.href = "index.html";
+  }
+
+  function nextPage() {
+    window.location.href = "page3.html";
+  }
+</script>
+</body>
+</html>

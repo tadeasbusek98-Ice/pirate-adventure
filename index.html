@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pirate Adventure – Login</title>
+  <link rel="icon" type="image/png" href="logo.png" />
+  <style>
+    /* ── NASTAVENÍ PŘIHLAŠOVACÍCH ÚDAJŮ je dole v <script> ── */
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #1a0a00;
+      font-family: Georgia, serif;
+    }
+
+    .card {
+      position: relative;
+      background: #FFB800;
+      border-radius: 40px;
+      padding: 50px 60px 50px 60px;
+      width: 560px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    }
+
+    .pirate-icon {
+      position: absolute;
+      top: -30px;
+      right: -20px;
+      width: 100px;
+      height: 100px;
+      background: #5C3310;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      overflow: hidden;
+    }
+
+    label {
+      display: block;
+      font-size: 18px;
+      color: #3B1A00;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      padding: 10px 14px;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      background: #fff;
+      margin-bottom: 24px;
+      outline: none;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.15);
+    }
+
+    .buttons {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 8px;
+    }
+
+    button {
+      padding: 12px 48px;
+      font-size: 16px;
+      font-family: Georgia, serif;
+      border: none;
+      border-radius: 8px;
+      background: #3B1A00;
+      color: #FFD966;
+      cursor: pointer;
+      letter-spacing: 0.5px;
+      transition: background 0.2s;
+    }
+
+    button:hover { background: #5a2a00; }
+
+    /* ── POPUP ── */
+    .popup-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+
+    .popup-overlay.active { display: flex; }
+
+    .popup {
+      background: #FFB800;
+      border: 4px solid #3B1A00;
+      border-radius: 20px;
+      padding: 36px 48px;
+      text-align: center;
+      min-width: 280px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    }
+
+    .popup .skull { font-size: 48px; margin-bottom: 12px; }
+
+    .popup p {
+      font-size: 20px;
+      color: #3B1A00;
+      font-weight: bold;
+      margin-bottom: 24px;
+      line-height: 1.4;
+    }
+
+    .popup button { padding: 10px 36px; }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <div class="pirate-icon"><img src="logo.png" alt="logo" style="width:80px;height:80px;object-fit:contain;border-radius:14px;" /></div>
+
+    <label for="username">Name:</label>
+    <input type="text" id="username" autocomplete="off" />
+
+    <label for="password">Password:</label>
+    <input type="password" id="password" />
+
+    <div class="buttons">
+      <button onclick="doLogin()">Login</button>
+      <button onclick="doClear()">Clear</button>
+    </div>
+  </div>
+
+  <!-- Popup chybová hláška -->
+  <div class="popup-overlay" id="popup">
+    <div class="popup">
+      <div class="skull">💀</div>
+      <p id="popup-msg"></p>
+      <button onclick="closePopup()">OK</button>
+    </div>
+  </div>
+
+<script>
+  // ════════════════════════════════════════
+  //   NASTAVENÍ PŘIHLAŠOVACÍCH ÚDAJŮ
+  // ════════════════════════════════════════
+  const CORRECT_NAME     = "kapitan";   // ← změň jméno
+  const CORRECT_PASSWORD = "rum123";    // ← změň heslo
+  // ════════════════════════════════════════
+
+  const SECOND_PAGE = "adventure.html";
+
+  function doLogin() {
+    const name = document.getElementById("username").value.trim();
+    const pass = document.getElementById("password").value;
+
+    const wrongName = name !== CORRECT_NAME;
+    const wrongPass = pass !== CORRECT_PASSWORD;
+
+    if (wrongName && wrongPass) {
+      showPopup("Spatne jmeno\nSpatne heslo");
+    } else if (wrongName) {
+      showPopup("Spatne jmeno");
+    } else if (wrongPass) {
+      showPopup("Spatne heslo");
+    } else {
+      sessionStorage.setItem("loggedIn", "true");
+      window.location.href = SECOND_PAGE;
+    }
+  }
+
+  function doClear() {
+    document.getElementById("username").value = "";
+    document.getElementById("password").value = "";
+    document.getElementById("username").focus();
+  }
+
+  function showPopup(msg) {
+    document.getElementById("popup-msg").innerText = msg;
+    document.getElementById("popup").classList.add("active");
+  }
+
+  function closePopup() {
+    document.getElementById("popup").classList.remove("active");
+  }
+
+  // Enter spustí login
+  document.addEventListener("keydown", e => {
+    if (e.key === "Enter") doLogin();
+  });
+
+  // Pokud je uživatel už přihlášen, přeskoč na druhou stránku
+  if (sessionStorage.getItem("loggedIn") === "true") {
+    window.location.href = SECOND_PAGE;
+  }
+</script>
+</body>
+</html>
