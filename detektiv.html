@@ -302,6 +302,7 @@
     { delay: 14500, type: "them", time: "09:13", text: "Identita pachatele zatím neznámá.\nAvšak papír napovídá... více než by měl." },
     { delay: 16500, type: "them", time: "09:13", text: "Pokud víte cokoliv o pachateli, kontaktujte mě neprodleně." },
     { delay: 18800, type: "them", time: "09:14", text: "Případ je otevřen.\n\n— Detektiv Punčocha 🔍" },
+    { delay: 21000, type: "link",  time: "09:14" },
   ];
 
   const container = document.getElementById("messages");
@@ -319,7 +320,20 @@
 
     let el;
 
-    if (msg.type === "img") {
+    if (msg.type === "link") {
+      el = document.createElement("div");
+      el.className = "bubble-wrap them";
+      el.innerHTML = `
+        <img src="${AVATAR}" class="bubble-avatar" alt="" />
+        <div class="bubble them" style="padding-bottom:10px;">
+          <div style="font-size:12px;color:#8696a0;margin-bottom:6px;">🔗 Odkaz</div>
+          <a href="index.html" style="display:block;background:#1a2e38;border-radius:6px;padding:10px 12px;text-decoration:none;border-left:3px solid #00a884;">
+            <div style="font-size:13px;font-weight:600;color:#e9edef;">🏴‍☠️ Pirátova tajná stránka</div>
+            <div style="font-size:12px;color:#8696a0;margin-top:3px;">Otevřít vyšetřovaný případ</div>
+          </a>
+          <span class="bubble-time" style="position:static;display:block;text-align:right;margin-top:6px;">${msg.time}</span>
+        </div>`;
+    } else if (msg.type === "img") {
       el = document.createElement("div");
       el.className = "bubble-wrap them";
       el.innerHTML = `
