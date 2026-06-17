@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>Detektiv Punčocha</title>
+  <link rel="icon" type="image/png" href="src/logo.png" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #111b21;
+      font-family: -apple-system, 'Segoe UI', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    /* ── TELEFON WRAPPER ── */
+    .phone {
+      width: 100%;
+      max-width: 430px;
+      min-height: 100vh;
+      background: #0b141a;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* ── HEADER ── */
+    .wa-header {
+      background: #1f2c34;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      border-bottom: 1px solid #2a3942;
+    }
+
+    .back-arrow {
+      color: #aebac1;
+      font-size: 22px;
+      cursor: pointer;
+    }
+
+    .contact-avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #2a3942;
+      flex-shrink: 0;
+    }
+
+    .contact-info { flex: 1; }
+    .contact-name {
+      font-size: 16px;
+      font-weight: 600;
+      color: #e9edef;
+    }
+    .contact-status {
+      font-size: 12px;
+      color: #8696a0;
+    }
+
+    .header-icons { color: #aebac1; font-size: 20px; display: flex; gap: 20px; }
+
+    /* ── TAPETA ── */
+    .wa-messages {
+      flex: 1;
+      padding: 10px 8px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      background-color: #0b141a;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Cpath d='M30 5 L55 20 L55 40 L30 55 L5 40 L5 20 Z' fill='none' stroke='%23192733' stroke-width='1'/%3E%3C/svg%3E");
+      overflow-y: auto;
+    }
+
+    /* ── DATUM ── */
+    .date-divider {
+      text-align: center;
+      margin: 10px 0 6px;
+    }
+    .date-divider span {
+      background: #1f2c34;
+      color: #8696a0;
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 8px;
+    }
+
+    /* ── BUBLINY ── */
+    .bubble-wrap {
+      display: flex;
+      align-items: flex-end;
+      gap: 6px;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+      margin-bottom: 2px;
+    }
+    .bubble-wrap.visible { opacity: 1; transform: translateY(0); }
+
+    .bubble-wrap.them { justify-content: flex-start; }
+    .bubble-wrap.me   { justify-content: flex-end; padding-right: 4px; }
+
+    .bubble-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      object-fit: cover;
+      flex-shrink: 0;
+      margin-bottom: 2px;
+    }
+    .bubble-wrap.me .bubble-avatar { display: none; }
+
+    .bubble {
+      max-width: 75%;
+      padding: 7px 10px 18px;
+      border-radius: 8px;
+      position: relative;
+      font-size: 14.5px;
+      line-height: 1.45;
+      word-break: break-word;
+    }
+
+    .bubble.them {
+      background: #202c33;
+      color: #e9edef;
+      border-top-left-radius: 0;
+    }
+
+    .bubble.me {
+      background: #005c4b;
+      color: #e9edef;
+      border-top-right-radius: 0;
+    }
+
+    .bubble-time {
+      position: absolute;
+      bottom: 4px;
+      right: 8px;
+      font-size: 11px;
+      color: #8696a0;
+      white-space: nowrap;
+    }
+
+    .bubble.me .bubble-time { color: #8696a0; }
+
+    /* tick pro vlastní zprávy */
+    .tick { margin-left: 3px; color: #53bdeb; }
+
+    /* ── OBRÁZEK V BUBLINE ── */
+    .bubble-img {
+      max-width: 75%;
+      border-radius: 8px;
+      overflow: hidden;
+      cursor: pointer;
+      position: relative;
+    }
+    .bubble-img img {
+      width: 100%;
+      display: block;
+      border-radius: 8px;
+    }
+    .bubble-img .img-time {
+      position: absolute;
+      bottom: 6px;
+      right: 8px;
+      font-size: 11px;
+      color: #fff;
+      background: rgba(0,0,0,0.45);
+      padding: 1px 5px;
+      border-radius: 6px;
+    }
+
+    /* ── PSANÍ ── */
+    .typing-indicator {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 0 8px 36px;
+    }
+    .typing-indicator.visible { display: flex; }
+    .typing-bubble {
+      background: #202c33;
+      border-radius: 18px;
+      padding: 10px 14px;
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+    .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: #8696a0;
+      animation: bounce 1.2s infinite;
+    }
+    .dot:nth-child(2) { animation-delay: 0.2s; }
+    .dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce {
+      0%, 60%, 100% { transform: translateY(0); }
+      30% { transform: translateY(-5px); }
+    }
+
+    /* ── INPUT (dekorativní) ── */
+    .wa-input {
+      background: #1f2c34;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+    .wa-input-box {
+      flex: 1;
+      background: #2a3942;
+      border-radius: 24px;
+      padding: 10px 16px;
+      color: #8696a0;
+      font-size: 15px;
+    }
+    .wa-mic { color: #aebac1; font-size: 24px; }
+
+    /* ── LIGHTBOX ── */
+    .lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.92);
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      cursor: pointer;
+    }
+    .lightbox.active { display: flex; }
+    .lightbox img { max-width: 95vw; max-height: 92vh; border-radius: 4px; }
+  </style>
+</head>
+<body>
+<div class="phone">
+
+  <!-- HEADER -->
+  <div class="wa-header">
+    <span class="back-arrow">←</span>
+    <img src="src/detective.png" alt="Detektiv" class="contact-avatar" />
+    <div class="contact-info">
+      <div class="contact-name">Detektiv Punčocha</div>
+      <div class="contact-status" id="status-text">online</div>
+    </div>
+    <div class="header-icons"><span>📞</span><span>⋮</span></div>
+  </div>
+
+  <!-- ZPRÁVY -->
+  <div class="wa-messages" id="messages">
+
+    <div class="date-divider"><span>Dnes</span></div>
+
+    <!-- zprávy se vloží dynamicky -->
+
+    <div class="typing-indicator" id="typing">
+      <img src="src/detective.png" class="bubble-avatar" alt="" />
+      <div class="typing-bubble">
+        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- INPUT (jen dekorace) -->
+  <div class="wa-input">
+    <span style="font-size:22px;color:#8696a0">😊</span>
+    <div class="wa-input-box">Zpráva</div>
+    <span style="font-size:22px;color:#8696a0">📎</span>
+    <span class="wa-mic">🎤</span>
+  </div>
+
+</div>
+
+<!-- LIGHTBOX PRO KARTU -->
+<div class="lightbox" id="lightbox" onclick="this.classList.remove('active')">
+  <img src="src/karta.png" alt="Pirátova tajná karta" />
+</div>
+
+<script>
+  const AVATAR = "src/detective.png";
+
+  const messages = [
+    { delay: 800,  type: "them", time: "13:41", text: "Dobrý den." },
+    { delay: 1400, type: "them", time: "13:41", text: "Detektiv Punčocha na drátě." },
+    { delay: 2600, type: "them", time: "13:42", text: "Vedu vyšetřování případu č. 2026-0617/DHL.\nKvalifikace: loupež za bílého dne na otevřené silnici." },
+    { delay: 4200, type: "them", time: "13:43", text: "Místo činu bylo zajištěno ve 14:32.\nOběť: dodávka DHL, SPZ 3XY-7K2.\nStav: kufr násilně otevřen, obsah odcizen." },
+    { delay: 6000, type: "them", time: "13:44", text: "Svědci popisují pachatele jako... malé postavy.\nNápadně ostrý zápach. Snad rum.\nNebo ponožky. Těžko říct." },
+    { delay: 8000, type: "them", time: "13:45", text: "Na místě činu byl nalezen JEDINÝ DŮKAZ.\nNesu ho k analýze." },
+    { delay: 10200, type: "them", time: "13:45", text: "Fotografuji a posílám." },
+    { delay: 12000, type: "img",  time: "13:46" },
+    { delay: 14500, type: "them", time: "13:47", text: "Identita pachatele zatím neznámá.\nAvšak papír napovídá... více než by měl." },
+    { delay: 16500, type: "them", time: "13:47", text: "Pokud víte cokoliv o osobě zvané...\n\n*Piratonozka*\n\n...kontaktujte mě neprodleně." },
+    { delay: 18800, type: "them", time: "13:48", text: "Případ je otevřen.\n\n— Detektiv Punčocha 🔍" },
+  ];
+
+  const container = document.getElementById("messages");
+  const typing    = document.getElementById("typing");
+  const statusEl  = document.getElementById("status-text");
+
+  function showTyping() {
+    typing.classList.add("visible");
+    typing.scrollIntoView({ behavior: "smooth", block: "end" });
+  }
+  function hideTyping() { typing.classList.remove("visible"); }
+
+  function insertBubble(msg) {
+    hideTyping();
+
+    let el;
+
+    if (msg.type === "img") {
+      el = document.createElement("div");
+      el.className = "bubble-wrap them";
+      el.innerHTML = `
+        <img src="${AVATAR}" class="bubble-avatar" alt="" />
+        <div class="bubble-img" onclick="document.getElementById('lightbox').classList.add('active')">
+          <img src="src/karta.png" alt="Důkaz" />
+          <div class="img-time">${msg.time}</div>
+        </div>`;
+    } else if (msg.type === "them") {
+      el = document.createElement("div");
+      el.className = "bubble-wrap them";
+      el.innerHTML = `
+        <img src="${AVATAR}" class="bubble-avatar" alt="" />
+        <div class="bubble them">${msg.text.replace(/\n/g,"<br>").replace(/\*(.*?)\*/g,"<strong>$1</strong>")}
+          <span class="bubble-time">${msg.time}</span>
+        </div>`;
+    } else {
+      el = document.createElement("div");
+      el.className = "bubble-wrap me";
+      el.innerHTML = `
+        <div class="bubble me">${msg.text.replace(/\n/g,"<br>")}
+          <span class="bubble-time">${msg.time} <span class="tick">✓✓</span></span>
+        </div>`;
+    }
+
+    container.insertBefore(el, typing);
+    requestAnimationFrame(() => el.classList.add("visible"));
+    el.scrollIntoView({ behavior: "smooth", block: "end" });
+  }
+
+  // Spusť sekvenci
+  messages.forEach((msg, i) => {
+    // Ukaž "píše..." chvíli před zprávou
+    setTimeout(() => {
+      statusEl.textContent = "píše…";
+      showTyping();
+    }, msg.delay - 900);
+
+    setTimeout(() => {
+      statusEl.textContent = "online";
+      insertBubble(msg);
+
+      // Po poslední zprávě schovej status
+      if (i === messages.length - 1) {
+        setTimeout(() => { statusEl.textContent = "naposledy viděn/a dnes v 13:48"; }, 1500);
+      }
+    }, msg.delay);
+  });
+</script>
+</body>
+</html>
