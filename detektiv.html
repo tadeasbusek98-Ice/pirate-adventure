@@ -364,24 +364,34 @@
     el.scrollIntoView({ behavior: "smooth", block: "end" });
   }
 
-  // Spusť sekvenci
-  messages.forEach((msg, i) => {
-    // Ukaž "píše..." chvíli před zprávou
-    setTimeout(() => {
-      statusEl.textContent = "píše…";
-      showTyping();
-    }, msg.delay - 900);
+  const SEEN_KEY = "detective_chat_seen";
 
-    setTimeout(() => {
-      statusEl.textContent = "online";
-      insertBubble(msg);
+  if (localStorage.getItem(SEEN_KEY)) {
+    // Už viděno — zobraz vše okamžitě bez animace
+    hideTyping();
+    messages.forEach(msg => insertBubble(msg));
+    statusEl.textContent = "naposledy viděn/a dnes v 09:14";
+  } else {
+    // První návštěva — spusť sekvenci s efekty
+    messages.forEach((msg, i) => {
+      setTimeout(() => {
+        statusEl.textContent = "píše…";
+        showTyping();
+      }, msg.delay - 900);
 
-      // Po poslední zprávě schovej status
-      if (i === messages.length - 1) {
-        setTimeout(() => { statusEl.textContent = "naposledy viděn/a dnes v 09:14"; }, 1500);
-      }
-    }, msg.delay);
-  });
+      setTimeout(() => {
+        statusEl.textContent = "online";
+        insertBubble(msg);
+
+        if (i === messages.length - 1) {
+          setTimeout(() => {
+            statusEl.textContent = "naposledy viděn/a dnes v 09:14";
+            localStorage.setItem(SEEN_KEY, "1");
+          }, 1500);
+        }
+      }, msg.delay);
+    });
+  }
 </script>
 </body>
 </html>
