@@ -291,17 +291,17 @@
   const AVATAR = "src/detective.png";
 
   const messages = [
-    { delay: 800,  type: "them", time: "13:41", text: "Dobrý den." },
-    { delay: 1400, type: "them", time: "13:41", text: "Detektiv Punčocha na drátě." },
-    { delay: 2600, type: "them", time: "13:42", text: "Vedu vyšetřování případu č. 2026-0617/DHL.\nKvalifikace: loupež za bílého dne na otevřené silnici." },
-    { delay: 4200, type: "them", time: "13:43", text: "Místo činu bylo zajištěno ve 14:32.\nOběť: dodávka DHL, SPZ 3XY-7K2.\nStav: kufr násilně otevřen, obsah odcizen." },
-    { delay: 6000, type: "them", time: "13:44", text: "Svědci popisují pachatele jako... malé postavy.\nNápadně ostrý zápach. Snad rum.\nNebo ponožky. Těžko říct." },
-    { delay: 8000, type: "them", time: "13:45", text: "Na místě činu byl nalezen JEDINÝ DŮKAZ.\nNesu ho k analýze." },
-    { delay: 10200, type: "them", time: "13:45", text: "Fotografuji a posílám." },
-    { delay: 12000, type: "img",  time: "13:46" },
-    { delay: 14500, type: "them", time: "13:47", text: "Identita pachatele zatím neznámá.\nAvšak papír napovídá... více než by měl." },
-    { delay: 16500, type: "them", time: "13:47", text: "Pokud víte cokoliv o osobě zvané...\n\n*Piratonozka*\n\n...kontaktujte mě neprodleně." },
-    { delay: 18800, type: "them", time: "13:48", text: "Případ je otevřen.\n\n— Detektiv Punčocha 🔍" },
+    { delay: 800,  type: "them", time: "09:07", text: "Dobrý den." },
+    { delay: 1400, type: "them", time: "09:07", text: "Detektiv Punčocha na drátě." },
+    { delay: 2600, type: "them", time: "09:08", text: "Vedu vyšetřování případu č. 2026-0617/DHL.\nKvalifikace: loupež za bílého dne na otevřené silnici." },
+    { delay: 4200, type: "them", time: "09:09", text: "Místo činu bylo zajištěno ve 08:32.\nOběť: dodávka DHL, SPZ 3XY-7K2.\nStav: kufr násilně otevřen, obsah odcizen." },
+    { delay: 6000, type: "them", time: "09:10", text: "Svědci popisují pachatele jako... malé postavy.\nNápadně ostrý zápach. Snad rum.\nNebo ponožky. Těžko říct." },
+    { delay: 8000, type: "them", time: "09:11", text: "Na místě činu byl nalezen JEDINÝ DŮKAZ.\nNesu ho k analýze." },
+    { delay: 10200, type: "them", time: "09:11", text: "Fotografuji a posílám." },
+    { delay: 12000, type: "img",  time: "09:12" },
+    { delay: 14500, type: "them", time: "09:13", text: "Identita pachatele zatím neznámá.\nAvšak papír napovídá... více než by měl." },
+    { delay: 16500, type: "them", time: "09:13", text: "Pokud víte cokoliv o pachateli, kontaktujte mě neprodleně." },
+    { delay: 18800, type: "them", time: "09:14", text: "Případ je otevřen.\n\n— Detektiv Punčocha 🔍" },
   ];
 
   const container = document.getElementById("messages");
@@ -364,7 +364,7 @@
 
       // Po poslední zprávě schovej status
       if (i === messages.length - 1) {
-        setTimeout(() => { statusEl.textContent = "naposledy viděn/a dnes v 13:48"; }, 1500);
+        setTimeout(() => { statusEl.textContent = "naposledy viděn/a dnes v 09:14"; }, 1500);
       }
     }, msg.delay);
   });
