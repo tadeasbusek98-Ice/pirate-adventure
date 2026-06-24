@@ -582,7 +582,7 @@
 
   // ── CHAT ──
   const CHAT_KEY     = "pirat_chat_extra";
-  const CHAT_VERSION = "3"; // zvyš číslo když chceš vymazat staré zprávy z localStorage
+  const CHAT_VERSION = "4"; // zvyš číslo když chceš vymazat staré zprávy z localStorage
   if (localStorage.getItem("pirat_chat_ver") !== CHAT_VERSION) {
     localStorage.removeItem(CHAT_KEY);
     localStorage.setItem("pirat_chat_ver", CHAT_VERSION);
@@ -591,32 +591,36 @@
   const INITIAL_CHAT = [
     "[17.6.]",
     "Ahoj Kapitane! Slyšel jsem, že si znovu oloupil Flamkuse o ponožky. Opravdu?",
-    "- ARRRR! Oloupil?! To bylo HRDINSKE DOBYTI, Levofusko! Největší pirátský čin od ukradnutí Flamkusovy červené ponožky!",
+    "- ARRRR! Oloupil?! To bylo HRDINSKE DOBYTI, Levofusko! Největší pirátský čin od ukradnutí Flamkusovy červené ponožky! Básně se budou zpívat!",
     "Hmm. A co to bylo za potvoru co ti je přinesla?",
-    "- Ani mi nepovídej! Strašná obluda! Ale velký Kapitan PIRATONOZKA seničeho nezalekne! ARRR!",
-    "- Chytil sem ji za supinu, otevřel jsem ji od břicha a náklad byl UNESEN! HAHAHA ARGH!",
+    "- Ani mi nepovídej! Strašná obluda, vrčela, funěla! Ale velký Kapitan PIRATONOZKA seničeho nezalekne! ARRR!",
+    "- Chytil sem ji za supinu, otevřel jsem ji od břicha a náklad byl UNESEN! Vítězství! HAHAHA ARGH!",
     "Unesen kým přesně, Kapitáne?",
-    "- Mnou přeci! Velkým Piratonozkou! ARRR!",
-    "Ano, Kapitáne. Budu u stodůlek až slunko zajde — 23.6. Heslo: Flamkus smrdí!",
-    "- AAAAARGH! Tam budu!",
+    "- Mnou přeci! Velkým Piratonozkou, nejslavnějším pirátem sedmi moří! ARRR!",
+    "Ano, Kapitáne. Budu na obvyklém místě u stodůlek až slunko zajde — 23.6. Heslo: Flamkus smrdí!",
+    "- AAAAARGH! Na věčné časy a nikdy jinak! Tam budu!",
     "AAAAARGH! 🏴‍☠️",
     "[24.6.]",
     "- Levofusko!!!",
-    "- Halooo!!!",
+    "- Haloooo!!!",
     "- Už tu čekám od západu slunka!!",
     "- Kde je ta proklatá mapa",
     "- Flamkus smrdí!",
     "- Flamkus smrdí!",
-    "- Halooooo kde jseeeš!!!",
-    "Kapitáne. Poslyšte. Tajemná kráska přišla na místo — vzala mapu dřív než jsem stihl cokoliv říct.",
-    "Jsme na stopě. Nevěřte nikomu, Kapitáne. Nikomu.",
-    "- ARRRRGH!! Jak ti mám ale věřit ty s tím pokladem?! Jsi možná sám Flamkusův špeh!! Zrádče!!",
-    "Kapitáne. Já jsem Levofuška. Sloužím vám věrně od bitvy o velkou ponožku roku nula. Pamatujete?",
+    "- Haloooo!",
+    "Myslel jsem si to, Kapitáne. Ta kráska byla až moc podezřelá — a znala heslo, Kapitáne. Znala heslo. Poklad jsem ale stihl schovat.",
+    "- Kde?! Levofusko? Arrrrr kde?!",
+    "- Počkej... jaká kráska?!",
+    "- Zloději! Zloději! To JÁ jsem zloděj ponožek největší, jak se to opovažuje!! Flamkus nám šlape na paty!!",
+    "Tajemná kráska, Kapitáne. Přišla na místo, usmála se a řekla heslo jako by ho znala celý život. Vzala mapu. Zmizela jako přízrak.",
+    "Jsme na stopě, Kapitáne. Nevěřte nikomu. Nikomu.",
+    "- A jak mám věřit tobě, Levofusko?! Ty s tím pokladem?! Co když jsi sám Flamkusův špicloun?! Arrrrgh!!",
+    "Kapitáne. Sloužím vám věrně od bitvy o velkou ponožku roku nula. Pamatujete?",
     "- ...argh. Pamatuju.",
-    "- Dobře. Mluvíme dál. Ale jedno oko na tebe mám pořád, Levofuško. ARRR!",
-    "Správně Kapitáne. Opatrnost je základ. O úplňku si pro poklad přijdeme spolu. Dam vám vědět kde.",
-    "- Dobrá. Čekám na Pirátterovi. Flamkus nás nedostane!! ARRGH!",
-    "Poklad je schován na bezpečném místě, pane Kapitáne.",
+    "- Dobrá. Mluvíme dál. Ale jedno oko na tebe mám pořád, Levofusko. ARRR!",
+    "Správně, Kapitáne. Opatrnost je základ přežití na sedmi mořích. Počkejte na místě — vyzvednu ponožky a schovám je na místě novém. O úplňku je půjdeme zakopat společně!",
+    "- Dobrá, Levofusko! Čekám na Pirátterovi. Flamkus nás nedostane!! ARRGH!",
+    "Poklad je schován na bezpečném místě, pane Kapitáne. Arrrrrr!",
     "- ARRRRRR!!",
     "ARRRRRR!! 🏴‍☠️",
   ];
