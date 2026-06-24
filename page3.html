@@ -584,12 +584,31 @@
   const CHAT_KEY = "pirat_chat_extra";
 
   const INITIAL_CHAT = [
-    "Ahoj Kapitane! Slysel sem, ze si ukradl ponozku Flamkusovi. Opravdu?",
-    "- Arrrr! To byl STRATEGICKY MANEVR, Levofusko! Nejvetsi piratsky cin od ukradnuti Flamkusovy cervene ponozky!",
-    "Hmm. A proc zrovna ponozka?",
-    "- Protoze jsem NEJVETSI PIRAT na sedmi moriach! A velkej pirat potrebuje velky... ee... ponozky. ARRR!",
-    "To dava smysl... ne.",
-    "- Ty nechapaas! Jednou budes vyprávět svym vnukum, ze jsi znal Kapitana Piratonozku osobne!",
+    "[17.6.]",
+    "Ahoj Kapitane! Slyšel jsem, že si znovu oloupil Flamkuse o ponožky. Opravdu?",
+    "- ARRRR! Oloupil?! To bylo HRDINSKE DOBYTI, Levofusko!",
+    "Hmm. A co to bylo za potvoru?",
+    "- Ani mi nepovídej! Strašná obluda! Ale velký Kapitan PIRATONOZKA se ničeho nezalekne! ARRR!",
+    "- Chytil sem ji za supinu, otevřel jsem ji od břicha a náklad byl UNESEN! HAHAHA ARGH!",
+    "Unesen kým přesně, Kapitáne?",
+    "- Mnou přeci! ARRR!",
+    "Ano, Kapitáne. Budu u stodůlek až slunko zajde — 23.6. Heslo: Flamkus smrdí!",
+    "- AAAAARGH! Tam budu!",
+    "AAAAARGH! 🏴‍☠️",
+    "[24.6.]",
+    "- Levofusko!!!",
+    "- Halooo!!!",
+    "- Už tu čekám od západu slunka!!",
+    "- Kde je ta proklatá mapa",
+    "- Flamkus smrdí!",
+    "- Flamkus smrdí!",
+    "- Halooo!",
+    "Myslel jsem si to, Kapitáne. Ta kráska byla až moc podezřelá. Ale nebojte — poklad jsem schoval.",
+    "- Kde?! Levofusko? Arrrrr kde?!",
+    "- Počkej jaká kráska?!",
+    "- Zloději! Zloději! ...to já jsem zloděj největší. Flamkus nám šlape na paty!!",
+    "Nebojte Kapitáne, vše je pod kontrolou. O úplňku půjdeme zakopat na místo nové!",
+    "- ARRRGH!! Čekám na Pirátterovi! Flamkus nás nedostane!!",
   ];
 
   async function loadChat() {
@@ -606,14 +625,24 @@
       }
     } catch(e) {}
 
-    // Pokud fetch selhal (lokální soubor, CORS), použij hardcoded zálohu
     if (fileLines.length === 0) fileLines = INITIAL_CHAT;
 
     const extra = JSON.parse(localStorage.getItem(CHAT_KEY) || "[]");
     for (const line of [...fileLines, ...extra]) {
-      appendMsg(line.startsWith("-"), line.startsWith("-") ? line.slice(1).trim() : line.trim());
+      if (/^\[\d{1,2}\.\d{1,2}\.\]$/.test(line)) {
+        appendDateDivider(line.slice(1, -1));
+      } else {
+        appendMsg(line.startsWith("-"), line.startsWith("-") ? line.slice(1).trim() : line.trim());
+      }
     }
     container.scrollTop = container.scrollHeight;
+  }
+
+  function appendDateDivider(label) {
+    const div = document.createElement("div");
+    div.style.cssText = "text-align:center;margin:10px 0 4px;";
+    div.innerHTML = `<span style="background:#1f2c33;color:#8696a0;font-size:11px;padding:3px 10px;border-radius:8px;font-family:Georgia,serif;">${label}</span>`;
+    document.getElementById("chat-messages").appendChild(div);
   }
 
   function appendMsg(isRight, text) {
