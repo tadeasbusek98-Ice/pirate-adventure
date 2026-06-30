@@ -637,7 +637,7 @@
 
   // ── CHAT ──
   const CHAT_KEY     = "pirat_chat_extra";
-  const CHAT_VERSION = "5"; // zvyš číslo když chceš vymazat staré zprávy z localStorage
+  const CHAT_VERSION = "7"; // zvyš číslo když chceš vymazat staré zprávy z localStorage
   if (localStorage.getItem("pirat_chat_ver") !== CHAT_VERSION) {
     localStorage.removeItem(CHAT_KEY);
     localStorage.setItem("pirat_chat_ver", CHAT_VERSION);
@@ -686,6 +686,9 @@
     "Poklad je schován na bezpečném místě, pane Kapitáne. Arrrrrr!",
     "- Výborně ARRRRRR!!",
     "ARRRRRR!! 🏴‍☠️",
+    "[29.6.]",
+    "Kapitáne... mám zprávy. Připluly mi z dálek. Poproste kořist aby otevřela tenhle tajný simulator — jen pro vybrané piráty. Heslo znáte.",
+    "[link:simulator.html|🎮 Piratonozka Simulator — tajný přístup]",
   ];
 
   async function loadChat() {
@@ -725,7 +728,22 @@
   function appendMsg(isRight, text) {
     const div = document.createElement("div");
     div.className = "msg " + (isRight ? "msg-right" : "msg-left");
-    div.textContent = text;
+
+    // Speciální formát [link:url|popisek] → klikatelný odkaz
+    const linkMatch = text.match(/^\[link:([^\|]+)\|(.+)\]$/);
+    if (linkMatch) {
+      const url = linkMatch[1].trim();
+      const label = linkMatch[2].trim();
+      div.innerHTML = `<a href="${url}" style="color:inherit;text-decoration:none;">
+        <div style="background:rgba(0,0,0,0.15);border-radius:8px;padding:8px 10px;border-left:3px solid #FFD966;">
+          <div style="font-size:11px;opacity:0.7;margin-bottom:3px;">🔗 Odkaz</div>
+          <div style="font-weight:bold;">${label}</div>
+        </div>
+      </a>`;
+    } else {
+      div.textContent = text;
+    }
+
     document.getElementById("chat-messages").appendChild(div);
   }
 

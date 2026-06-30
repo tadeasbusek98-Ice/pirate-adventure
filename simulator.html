@@ -1,0 +1,1309 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>Piratonozka Simulator</title>
+  <link rel="icon" type="image/png" href="src/logo.png" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background:#0d1117; font-family:Georgia,serif; color:#FFD966; overflow:hidden; height:100vh; width:100vw; }
+
+    .scene { position:absolute; inset:0; display:none; }
+    .scene.active { display:block; }
+    .scene.fade-in { animation:fadeIn 0.6s ease; }
+    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+
+    /* HESLO */
+    #scene-password { background:#1a0a00; display:none; align-items:center; justify-content:center; }
+    #scene-password.active { display:flex; }
+    .pw-card { background:#FFB800; border-radius:32px; padding:40px 52px; text-align:center; box-shadow:0 8px 40px rgba(0,0,0,.6); max-width:440px; width:90%; }
+    .pw-card h2 { font-size:22px; color:#3B1A00; margin-bottom:6px; }
+    .pw-card p  { font-size:13px; color:#5C3310; margin-bottom:20px; }
+    .pw-card input { width:100%; padding:12px 16px; font-size:16px; font-family:Georgia,serif; border:none; border-radius:8px; margin-bottom:14px; outline:none; text-align:center; letter-spacing:2px; }
+    .pw-card .err { color:#8B0000; font-size:13px; min-height:18px; margin-bottom:10px; }
+    .btn { padding:12px 36px; background:#3B1A00; color:#FFD966; border:none; border-radius:10px; font-family:Georgia,serif; font-size:16px; cursor:pointer; transition:background .2s; }
+    .btn:hover { background:#5a2a00; }
+
+    /* SCÉNA 1 */
+    #scene-1 { background:url('src/Scene1.png') center/cover no-repeat; }
+    .stars { position:absolute; inset:0; pointer-events:none; }
+    .star { position:absolute; width:2px; height:2px; background:#fff; border-radius:50%; animation:twinkle 2s infinite ease-in-out alternate; }
+    @keyframes twinkle { from{opacity:.2} to{opacity:1} }
+
+    .boat {
+      position:absolute; bottom:30%; left:50%; transform:translateX(-50%);
+      opacity:0; animation:boatArrive 2s ease-out forwards, boatBob 3s 2s ease-in-out infinite;
+    }
+    @keyframes boatArrive { from{bottom:4%;opacity:0} to{bottom:30%;opacity:1} }
+    @keyframes boatBob {
+      0%,100%{transform:translateX(-50%) translateY(0)}
+      50%{transform:translateX(-50%) translateY(-8px)}
+    }
+    /* Piratonozka PŘED ship v DOM → ship renderuje nad ním */
+    .pirat-on-boat {
+      position:absolute; bottom:30%; left:49%; transform:translateX(-50%);
+      width:90px; opacity:0; z-index:1;
+      animation:pirateAppear .5s 2.2s ease forwards;
+      filter:drop-shadow(0 4px 8px rgba(0,0,0,.5));
+    }
+    @keyframes pirateAppear {
+      from{opacity:0;transform:translateX(-50%) scale(.8)}
+      to{opacity:1;transform:translateX(-50%) scale(1)}
+    }
+    .boat-ship { width:420px; display:block; position:relative; z-index:2; filter:drop-shadow(0 6px 16px rgba(0,0,0,.65)); }
+
+    .speech-bubble {
+      position:absolute; background:#FFB800; border:3px solid #3B1A00; border-radius:16px;
+      padding:10px 14px; font-size:13px; color:#3B1A00; max-width:240px; text-align:center; line-height:1.4;
+      opacity:0; animation:bubbleAppear .5s 2.8s ease forwards;
+      bottom:calc(30% + 260px); left:50%; transform:translateX(-50%); z-index:10;
+    }
+    .speech-bubble::after { content:''; position:absolute; bottom:-12px; left:50%; transform:translateX(-50%); border-left:10px solid transparent; border-right:10px solid transparent; border-top:12px solid #3B1A00; }
+    @keyframes bubbleAppear {
+      from{opacity:0;transform:translateX(-50%) translateY(-10px)}
+      to{opacity:1;transform:translateX(-50%) translateY(0)}
+    }
+
+    .choices { position:absolute; bottom:5%; left:0; right:0; display:flex; gap:12px; flex-wrap:wrap; justify-content:center; padding:0 16px; opacity:0; animation:choicesAppear .5s 3.8s ease forwards; }
+    @keyframes choicesAppear { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+    .choice-btn { padding:10px 20px; background:#FFB800; color:#3B1A00; border:none; border-radius:10px; font-family:Georgia,serif; font-size:14px; font-weight:bold; cursor:pointer; transition:background .2s,transform .1s; box-shadow:0 3px 8px rgba(0,0,0,.4); }
+    .choice-btn:hover { background:#FFD966; }
+    .choice-btn:active { transform:scale(.96); }
+
+    /* RYBAŘENÍ */
+    #scene-fishing { background:url('src/Scene1.png') center/cover no-repeat; }
+    .fishing-pirat { position:absolute; bottom:31%; left:50%; transform:translateX(-50%); width:100px; filter:drop-shadow(0 4px 8px rgba(0,0,0,.5)); z-index:3; transition:left 1.8s ease, bottom 1.8s ease, transform 1.8s ease; }
+    .fishing-rod-img { position:absolute; bottom:22%; left:52%; transform:translateX(-50%) rotate(15deg); width:380px; filter:drop-shadow(0 4px 8px rgba(0,0,0,.5)); z-index:2; animation:rodAppear .6s .3s ease both; }
+    /* Temnota při Krakenovi */
+    .fishing-dark { position:absolute; inset:0; background:rgba(0,15,50,0); transition:background 2.5s ease; pointer-events:none; z-index:4; }
+    @keyframes rodAppear { from{opacity:0;transform:translateX(-50%) rotate(15deg) translateY(-15px)} to{opacity:1;transform:translateX(-50%) rotate(15deg) translateY(0)} }
+
+    /* Sdílený dialog */
+    .dialog-box { position:absolute; bottom:14%; left:50%; transform:translateX(-50%); background:rgba(20,8,0,.91); border:2px solid #FFB800; border-radius:16px; padding:14px 20px; max-width:420px; width:90%; text-align:center; font-size:14px; line-height:1.6; z-index:10; }
+
+    /* Sdílené tlačítko Dál */
+    .next-btn { position:absolute; bottom:6%; left:50%; transform:translateX(-50%); padding:9px 26px; background:#FFB800; color:#3B1A00; border:none; border-radius:10px; font-family:Georgia,serif; font-size:14px; font-weight:bold; cursor:pointer; z-index:15; display:none; }
+    .next-btn:hover { background:#FFD966; }
+
+    /* Kraken */
+    .kraken { position:absolute; bottom:0; right:0; transform-origin:bottom right; display:none; z-index:5; }
+    .kraken img { width:130px; filter:drop-shadow(0 4px 16px rgba(0,0,0,.6)); display:block; }
+    .kraken.approach { display:block; animation:krakenApproach 4.5s ease-in forwards; }
+    @keyframes krakenApproach { 0%{transform:scale(.25);opacity:.8} 100%{transform:scale(9);opacity:1} }
+
+    /* ZAMRZLÝ OSTROV */
+    #scene-2v2 { background:url('src/Scene2v2.png') center/cover no-repeat; }
+    .snow-container { position:absolute; inset:0; pointer-events:none; overflow:hidden; z-index:1; }
+    .snowflake { position:absolute; top:-10px; color:#fff; animation:snowfall linear infinite; opacity:.85; }
+    @keyframes snowfall { to{transform:translateY(100vh) rotate(360deg);opacity:.2} }
+    .ship-frozen { position:absolute; bottom:28%; left:2%; width:260px; transform:rotate(-20deg); filter:drop-shadow(0 6px 14px rgba(0,0,0,.65)); z-index:2; }
+    .pirat-frozen { position:absolute; bottom:30%; left:50%; transform:translateX(-50%); width:90px; filter:drop-shadow(0 4px 8px rgba(0,0,0,.5)); z-index:2; animation:shiver .15s ease-in-out infinite alternate; }
+    @keyframes shiver { from{transform:translateX(-50%) rotate(-2deg)} to{transform:translateX(-50%) rotate(2deg)} }
+
+    /* PLÁŽ */
+    #scene-2v1 { background:url('src/Scene2v1.png') center/cover no-repeat; }
+    .pirat-beach { position:absolute; bottom:28%; left:50%; transform:translateX(-50%); width:80px; filter:drop-shadow(0 4px 8px rgba(0,0,0,.5)); }
+    .bubble-static { position:absolute; background:#FFB800; border:3px solid #3B1A00; border-radius:16px; padding:10px 14px; font-size:13px; color:#3B1A00; max-width:240px; text-align:center; line-height:1.4; z-index:10; }
+    .bubble-static::after { content:''; position:absolute; bottom:-12px; left:50%; transform:translateX(-50%); border-left:10px solid transparent; border-right:10px solid transparent; border-top:12px solid #3B1A00; }
+
+    /* HŘIŠTĚ */
+    #scene-3v1 { background:url('src/Scene3v1.png') center/cover no-repeat; }
+    .pirat-slide { position:absolute; width:80px; filter:drop-shadow(0 4px 8px rgba(0,0,0,.5)); top:8%; right:12%; transform:rotate(-15deg); animation:slideDown 2.5s ease-in forwards; z-index:3; }
+    @keyframes slideDown {
+      0%  {top:8%;right:12%;transform:rotate(-15deg)}
+      30% {top:25%;right:22%;transform:rotate(-5deg)}
+      70% {top:48%;right:35%;transform:rotate(5deg)}
+      100%{top:65%;right:44%;transform:rotate(10deg)}
+    }
+    .socks-img { position:absolute; left:4%; top:38%; width:330px; filter:drop-shadow(0 4px 10px rgba(0,0,0,.5)); opacity:0; transition:opacity .5s ease; z-index:3; }
+    .hand-img  { position:absolute; left:-220px; top:35%; width:360px; filter:drop-shadow(0 4px 10px rgba(0,0,0,.6)); transition:left 1.1s ease; z-index:4; }
+
+    /* SCÉNA 3v2 – CESTA */
+    #scene-3v2 { background:url('src/Scene3v2.png') center/cover no-repeat; }
+
+    .pirat-road {
+      position:absolute; bottom:28%; left:50%; transform:translateX(-50%);
+      width:90px; filter:drop-shadow(0 4px 8px rgba(0,0,0,.5)); z-index:3;
+      transition:left 2s ease, bottom 2s ease, transform 2s ease;
+    }
+    .dhl-peek {
+      position:absolute; bottom:30%; right:0;
+      width:280px; cursor:pointer; z-index:5;
+      transform:translateX(140px); /* ~140px viditelné */
+      transition:transform 1.2s ease;
+      filter:drop-shadow(0 4px 10px rgba(0,0,0,.6));
+    }
+    .dhl-peek:hover { filter:drop-shadow(0 4px 14px rgba(255,200,0,.5)); }
+
+    /* HP lišty (v domě nad canvasem) */
+    #hp-bars {
+      display:none; position:absolute; top:0; left:0; right:0; z-index:30;
+      padding:8px 12px; background:rgba(0,0,0,.65);
+      flex-direction:row; justify-content:space-between; align-items:center;
+    }
+    #hp-bars.visible { display:flex; }
+    .hp-label { font-size:12px; color:#FFD966; margin-bottom:3px; }
+    .hearts { display:flex; gap:3px; font-size:18px; }
+
+    /* Canvas hra */
+    #game-canvas { display:none; position:absolute; inset:0; z-index:20; }
+    @keyframes canvasShake {
+      0%,100%{transform:translate(0,0)}
+      15%{transform:translate(-12px,6px)}
+      30%{transform:translate(12px,-6px)}
+      45%{transform:translate(-8px,10px)}
+      60%{transform:translate(10px,-4px)}
+      75%{transform:translate(-6px,6px)}
+    }
+
+    /* Mobilní ovládání */
+    #mobile-ctrl {
+      display:none; position:absolute; bottom:0; left:0; right:0; z-index:35;
+      padding:14px; pointer-events:none;
+    }
+    #mobile-ctrl.visible { display:block; }
+    .dpad { position:absolute; bottom:20px; left:20px; width:126px; height:126px; pointer-events:all; }
+    .dpad-btn {
+      position:absolute; width:40px; height:40px;
+      background:rgba(255,184,0,.55); border:2px solid rgba(255,184,0,.8);
+      border-radius:8px; font-size:18px; color:#3B1A00;
+      display:flex; align-items:center; justify-content:center;
+      cursor:pointer; user-select:none;
+    }
+    .dpad-btn.up    { top:0;   left:43px; }
+    .dpad-btn.down  { bottom:0; left:43px; }
+    .dpad-btn.left  { top:43px; left:0; }
+    .dpad-btn.right { top:43px; right:0; }
+    .attack-btn {
+      position:absolute; bottom:20px; right:20px;
+      width:70px; height:70px; pointer-events:all;
+      background:rgba(255,80,0,.65); border:2px solid rgba(255,120,0,.9);
+      border-radius:50%; font-size:28px;
+      display:flex; align-items:center; justify-content:center;
+      cursor:pointer; user-select:none;
+    }
+
+    /* Sdílené: game over, restart */
+    .game-over-text { position:absolute; top:16%; left:50%; transform:translateX(-50%); font-size:34px; font-weight:bold; color:#FF4444; text-shadow:0 0 24px rgba(255,0,0,.6); white-space:nowrap; z-index:40; display:none; }
+    .game-over-text.show { display:block; animation:gameOver .5s ease forwards; }
+    @keyframes gameOver { from{transform:translateX(-50%) scale(.5);opacity:0} to{transform:translateX(-50%) scale(1);opacity:1} }
+    .restart-btn { position:absolute; bottom:5%; left:50%; transform:translateX(-50%); padding:10px 28px; background:#FFB800; color:#3B1A00; border:none; border-radius:10px; font-family:Georgia,serif; font-size:15px; font-weight:bold; cursor:pointer; display:none; z-index:40; }
+    .restart-btn:hover { background:#FFD966; }
+    .scene-title { position:absolute; top:14px; left:50%; transform:translateX(-50%); font-size:12px; color:rgba(255,210,0,.4); letter-spacing:2px; z-index:5; white-space:nowrap; }
+
+    /* ── Scéna 4v1 · Džungle ── */
+    #scene-4v1 { background:url('src/Scene4v1.png') center/cover no-repeat; }
+    #liana-svg { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:8; }
+    .vine      { fill:none; stroke:#1a5c2a; stroke-width:3; stroke-linecap:round; }
+    .vine-thin { fill:none; stroke:#2e8b3c; stroke-width:1.8; stroke-linecap:round; }
+    @keyframes vg1 { from{stroke-dashoffset:320} to{stroke-dashoffset:0} }
+    @keyframes vg2 { from{stroke-dashoffset:280} to{stroke-dashoffset:0} }
+    @keyframes vg3 { from{stroke-dashoffset:220} to{stroke-dashoffset:0} }
+    @keyframes leafPop { from{opacity:0;transform:scale(0)} to{opacity:1;transform:scale(1)} }
+    #branch-game { position:absolute; inset:0; z-index:15; pointer-events:all; }
+    #branch-miss { position:absolute; top:14px; right:14px; z-index:20; background:rgba(0,0,0,.75); color:#fff; font-size:14px; padding:5px 12px; border-radius:14px; }
+    .branch-item {
+      position:absolute; width:76px; height:14px;
+      background:linear-gradient(90deg,#5c3209,#8b5e2a,#5c3209);
+      border-radius:7px; cursor:pointer; z-index:16;
+      box-shadow:0 2px 6px rgba(0,0,0,.55);
+      display:flex; flex-direction:column; justify-content:flex-end; overflow:visible;
+    }
+    .branch-item::before { content:'🌿'; position:absolute; top:-14px; left:50%; transform:translateX(-50%); font-size:18px; pointer-events:none; }
+    .branch-timer-bar { height:4px; background:#ff3300; width:100%; border-radius:0 0 7px 7px; transform-origin:left; animation:branchTimer 3s linear forwards; }
+    @keyframes branchTimer { from{transform:scaleX(1)} to{transform:scaleX(0)} }
+
+    /* ── Scéna 4v2 · Machu Picchu ── */
+    #scene-4v2 { background:url('src/Scene4v2.png') center/cover no-repeat; }
+    #maze-canvas { display:none; position:absolute; inset:0; z-index:20; }
+    #maze-overlay { display:none; position:absolute; top:8px; left:50%; transform:translateX(-50%); z-index:25; background:rgba(0,0,0,.75); color:#ffe; padding:6px 18px; border-radius:20px; font-size:14px; white-space:nowrap; pointer-events:none; }
+    #maze-mobile { display:none; position:absolute; bottom:20px; left:20px; z-index:26; width:126px; height:126px; }
+
+    /* ── Finální scéna ── */
+    #scene-final { background:url('src/FinalScene.png') center/cover no-repeat; }
+    #sock-thumb {
+      position:absolute; top:50%; left:50%;
+      transform:translate(20%,-30%);
+      width:clamp(24px, 5.6vw, 48px);
+      cursor:pointer; z-index:10;
+      filter:drop-shadow(0 6px 18px rgba(0,0,0,.6));
+      transition:transform .2s ease, filter .2s ease;
+    }
+    #sock-thumb:hover { transform:translate(20%,-30%) scale(1.06); filter:drop-shadow(0 8px 24px rgba(255,210,0,.5)); }
+    #sock-fullscreen {
+      display:none; position:fixed; inset:0; z-index:200;
+      background:#000;
+      flex-direction:column; align-items:center; justify-content:center;
+      animation:fadeIn .5s ease;
+    }
+    #sock-fullscreen.open { display:flex; }
+    #sock-fullscreen img { max-width:100%; max-height:70vh; object-fit:contain; }
+    #sock-fullscreen .sock-msg {
+      color:#ffe; font-family:Georgia,serif; font-size:clamp(14px,2.2vw,22px);
+      text-align:center; margin:18px 24px 0; line-height:1.6;
+      text-shadow:0 2px 8px rgba(0,0,0,.8);
+    }
+    #sock-fullscreen .sock-restart {
+      margin-top:22px; padding:11px 32px;
+      background:#FFB800; color:#3B1A00; border:none; border-radius:12px;
+      font-family:Georgia,serif; font-size:16px; font-weight:bold; cursor:pointer;
+    }
+    #sock-fullscreen .sock-restart:hover { background:#FFD966; }
+  </style>
+</head>
+<body>
+
+<!-- HESLO -->
+<div class="scene active" id="scene-password">
+  <div class="pw-card">
+    <div style="font-size:48px;margin-bottom:12px">🔐</div>
+    <h2>Tajný přístup</h2>
+    <p>Tento simulator je určen pouze pro ověřené piráty.</p>
+    <input type="password" id="pw-input" placeholder="••••••••••••" onkeydown="if(event.key==='Enter')checkPw()" />
+    <div class="err" id="pw-err"></div>
+    <button class="btn" onclick="checkPw()">Vstoupit ⚓</button>
+  </div>
+</div>
+
+<!-- SCÉNA 1 – RYBNÍK -->
+<div class="scene" id="scene-1">
+  <div class="scene-title">SCÉNA 1 · RYBNÍK</div>
+  <div class="stars" id="stars"></div>
+  <div class="boat" id="boat">
+    <!-- pirat PŘED ship → ship renderuje nad ním -->
+    <img src="src/profile.png" class="pirat-on-boat" alt="Piratonozka" />
+    <img src="src/Ship.png" class="boat-ship" alt="Loď" />
+  </div>
+  <div class="speech-bubble">ARRR! Já jsem Kapitan Piratonozka — největší zlodej ponožek sedmi moří! Připlul jsem si pro svůj poklad! Kam dál?</div>
+  <div class="choices">
+    <button class="choice-btn" onclick="goScene('fishing')">🎣 Zůstat rybarit</button>
+    <button class="choice-btn" onclick="goScene('2v2')">🏝️ Jet na ostrov</button>
+    <button class="choice-btn" onclick="goScene('2v1')">⚓ Doplout na břeh</button>
+  </div>
+</div>
+
+<!-- RYBAŘENÍ -->
+<div class="scene" id="scene-fishing">
+  <div class="scene-title">SCÉNA 1 · RYBAŘENÍ</div>
+  <div class="stars" id="stars2"></div>
+  <img src="src/prut.png" class="fishing-rod-img" id="fishing-rod" alt="Prut" />
+  <img src="src/profile.png" class="fishing-pirat" id="fishing-pirat" alt="Piratonozka" />
+  <div class="kraken" id="kraken"><img src="src/KrakenMop.png" alt="Kraken" /></div>
+  <div class="fishing-dark" id="fishing-dark"></div>
+  <div class="game-over-text" id="go-fishing">☠️ JSI IMPOSTOR! ☠️</div>
+  <div class="dialog-box" id="fishing-dialog"></div>
+  <button class="next-btn" id="fishing-next" onclick="advanceFishing()">Dál →</button>
+  <button class="restart-btn" id="restart-fishing" onclick="restartGame()">🔄 Zkusit znovu</button>
+</div>
+
+<!-- ZAMRZLÝ OSTROV -->
+<div class="scene" id="scene-2v2">
+  <div class="scene-title">SCÉNA 2v2 · ZAMRZLÝ OSTROV</div>
+  <div class="snow-container" id="snow"></div>
+  <img src="src/Ship.png" class="ship-frozen" alt="Loď" />
+  <img src="src/profile.png" class="pirat-frozen" alt="Piratonozka" />
+  <div class="game-over-text" id="go-frozen" style="font-size:26px">🥶 JSI IMPOSTOR! 🥶</div>
+  <div class="dialog-box" id="frozen-dialog"></div>
+  <button class="next-btn" id="frozen-next" onclick="advanceFrozen()">Dál →</button>
+  <button class="restart-btn" id="restart-frozen" onclick="restartGame()">🔄 Zkusit znovu</button>
+</div>
+
+<!-- PLÁŽ -->
+<div class="scene" id="scene-2v1">
+  <div class="scene-title">SCÉNA 2v1 · PLÁŽ U HŘIŠTĚ</div>
+  <img src="src/profile.png" class="pirat-beach" alt="Piratonozka" />
+  <div class="bubble-static" style="bottom:46%;left:50%;transform:translateX(-50%)">ARRR! Doplavil jsem se! Hřiště nebo dál po cestě?</div>
+  <div class="choices" style="opacity:1;animation:none">
+    <button class="choice-btn" onclick="goScene('3v1')">🛝 Jít na hřiště</button>
+    <button class="choice-btn" onclick="goScene('3v2')">🗺️ Pokračovat po cestě</button>
+  </div>
+</div>
+
+<!-- HŘIŠTĚ -->
+<div class="scene" id="scene-3v1">
+  <div class="scene-title">SCÉNA 3v1 · HŘIŠTĚ</div>
+  <img src="src/profile.png" class="pirat-slide" id="pirat-slide" alt="Piratonozka" />
+  <img src="src/Socks.png" class="socks-img" id="socks-img" alt="Ponožky" />
+  <img src="src/Hand.png" class="hand-img" id="hand-img" alt="Ruka" />
+  <div class="game-over-text" id="go-slide">🛝 JSI IMPOSTOR! 🛝</div>
+  <div class="dialog-box" id="slide-dialog" style="display:none"></div>
+  <button class="next-btn" id="slide-next" onclick="advanceSlide()">Dál →</button>
+  <button class="restart-btn" id="restart-slide" onclick="restartGame()">🔄 Zkusit znovu</button>
+</div>
+
+<!-- SCÉNA 3v2 – CESTA S DODÁVKOU -->
+<div class="scene" id="scene-3v2">
+  <div class="scene-title">SCÉNA 3v2 · CESTA</div>
+
+  <!-- Piratonozka -->
+  <img src="src/profile.png" class="pirat-road" id="pirat-road" alt="Piratonozka" />
+
+  <!-- DHL dodávka (částečně schovaná vpravo, klikatelná) -->
+  <img src="src/Dhl.png" class="dhl-peek" id="dhl-truck" alt="Dodávka" onclick="clickDhl()" />
+
+  <!-- Volby -->
+  <div id="road-choices" class="choices" style="opacity:1;animation:none">
+    <button class="choice-btn" onclick="choosePath('road')">🛣️ Jít po silnici</button>
+    <button class="choice-btn" onclick="choosePath('forest')">🌲 Jít po lesní cestě</button>
+  </div>
+
+  <!-- Dialog + Dál + Restart pro scénu cesty -->
+  <div class="dialog-box" id="road-dialog" style="display:none"></div>
+  <button class="next-btn" id="road-next" onclick="advanceRoad()">Dál →</button>
+  <div class="game-over-text" id="go-road"></div>
+  <button class="restart-btn" id="restart-road" onclick="restartGame()">🔄 Zkusit znovu</button>
+
+  <!-- HP lišty (nad canvasem) -->
+  <div id="hp-bars">
+    <div>
+      <div class="hp-label">Pirátonožka</div>
+      <div class="hearts" id="pirat-hearts"></div>
+    </div>
+    <div style="text-align:right">
+      <div class="hp-label">Drak</div>
+      <div class="hearts" id="dragon-hearts" style="justify-content:flex-end"></div>
+    </div>
+  </div>
+
+  <!-- Canvas (minihra) -->
+  <canvas id="game-canvas"></canvas>
+
+  <!-- Hint ovládání -->
+  <div id="game-hint" style="display:none;position:absolute;bottom:14px;left:50%;transform:translateX(-50%);z-index:35;background:rgba(0,0,0,.65);color:#ffe;font-size:13px;padding:7px 16px;border-radius:20px;white-space:nowrap;pointer-events:none;">
+    Poraž draka &nbsp;·&nbsp; <b>WASD</b> pohyb &nbsp;·&nbsp; <b>mezerník</b> útok
+  </div>
+
+  <!-- Mobilní ovládání -->
+  <div id="mobile-ctrl">
+    <div class="dpad">
+      <div class="dpad-btn up"    onpointerdown="gk('KeyW',1)" onpointerup="gk('KeyW',0)" onpointerleave="gk('KeyW',0)">▲</div>
+      <div class="dpad-btn down"  onpointerdown="gk('KeyS',1)" onpointerup="gk('KeyS',0)" onpointerleave="gk('KeyS',0)">▼</div>
+      <div class="dpad-btn left"  onpointerdown="gk('KeyA',1)" onpointerup="gk('KeyA',0)" onpointerleave="gk('KeyA',0)">◄</div>
+      <div class="dpad-btn right" onpointerdown="gk('KeyD',1)" onpointerup="gk('KeyD',0)" onpointerleave="gk('KeyD',0)">►</div>
+    </div>
+    <div class="attack-btn" onpointerdown="gk('Space',1)" onpointerup="gk('Space',0)" onpointerleave="gk('Space',0)">⚔️</div>
+  </div>
+</div>
+
+<!-- SCÉNA 4v1 · DŽUNGLE -->
+<div class="scene" id="scene-4v1">
+  <div class="scene-title">SCÉNA 4 · DŽUNGLE</div>
+  <svg id="liana-svg" viewBox="0 0 100 100" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <path class="vine"      stroke-dasharray="320" style="animation:vg1 3.2s 0.3s ease both" d="M 0 100 C 12 72 8 50 30 34 C 50 20 78 16 100 8"/>
+    <path class="vine"      stroke-dasharray="280" style="animation:vg2 2.8s 0.9s ease both" d="M 100 0 C 80 26 76 46 58 60 C 40 74 16 82 0 92"/>
+    <path class="vine-thin" stroke-dasharray="220" style="animation:vg3 2.2s 1.4s ease both" d="M 0 52 C 22 38 44 56 64 44 C 78 36 88 50 100 44"/>
+    <path class="vine"      stroke-dasharray="240" style="animation:vg1 2.6s 0.6s ease both" d="M 42 100 C 36 80 46 62 40 44 C 34 26 46 14 50 0"/>
+    <path class="vine-thin" stroke-dasharray="190" style="animation:vg3 2.0s 1.8s ease both" d="M 100 78 C 80 72 64 80 50 70 C 38 60 24 70 4 64"/>
+    <circle cx="30" cy="34" r="3.5" fill="#1a5c2a" style="animation:leafPop .4s 2.8s both"/>
+    <circle cx="58" cy="60" r="2.8" fill="#2e8b3c" style="animation:leafPop .4s 3.2s both"/>
+    <circle cx="40" cy="44" r="2.2" fill="#1a5c2a" style="animation:leafPop .4s 3.5s both"/>
+    <circle cx="50" cy="70" r="2.5" fill="#2e8b3c" style="animation:leafPop .4s 3.8s both"/>
+  </svg>
+  <img src="src/profile.png" id="jungle-pirat" style="position:absolute;bottom:20%;left:50%;transform:translateX(-50%);width:90px;z-index:6;filter:drop-shadow(0 4px 8px rgba(0,0,0,.5))" alt="Piratonozka"/>
+  <div id="branch-game" style="display:none">
+    <div id="branch-miss">❌ 0 / 3</div>
+    <div id="branch-area" style="position:absolute;inset:0;pointer-events:all"></div>
+  </div>
+  <div class="game-over-text" id="go-jungle"></div>
+  <div class="dialog-box" id="jungle-dialog"></div>
+  <button class="next-btn" id="jungle-next" onclick="advanceJungle()">Dál →</button>
+  <button class="next-btn" id="jungle-win-btn" style="display:none" onclick="jungleWinNext()">Vpřed! →</button>
+  <button class="restart-btn" id="restart-jungle" style="display:none" onclick="restartGame()">🔄 Zkusit znovu</button>
+</div>
+
+<!-- FINÁLNÍ SCÉNA -->
+<div class="scene" id="scene-final">
+  <div class="scene-title">FINÁLE · POKLAD</div>
+  <div class="dialog-box" id="final-dialog" style="bottom:18%">Aaah... konečně! Tohle je to místo, kde zakopávám svůj poklad — a zrovna na západ slunce! ARRR! 🌅</div>
+  <img src="src/SockMessage.png" id="sock-thumb" alt="Zpráva" onclick="openSock()" />
+</div>
+
+<!-- Fullscreen SockMessage overlay -->
+<div id="sock-fullscreen">
+  <img src="src/SockMessage.png" alt="Zpráva od Piratonozky" />
+  <p class="sock-msg">Vítám vás, Kapitáne Pirátonožko! 🏴‍☠️<br>Jen vy byste zvládl projít tímto testem — ARRR!</p>
+  <button class="sock-restart" onclick="closeSockRestart()">🔄 Spustit znovu</button>
+</div>
+
+<!-- SCÉNA 4v2 · MACHU PICCHU -->
+<div class="scene" id="scene-4v2">
+  <div class="scene-title">SCÉNA 4 · MACHU PICCHU?!</div>
+  <canvas id="maze-canvas"></canvas>
+  <div id="maze-overlay"></div>
+  <div id="maze-mobile" class="dpad">
+    <div class="dpad-btn up"    onpointerdown="mzKey('up',1)"    onpointerup="mzKey('up',0)"    onpointerleave="mzKey('up',0)">▲</div>
+    <div class="dpad-btn down"  onpointerdown="mzKey('down',1)"  onpointerup="mzKey('down',0)"  onpointerleave="mzKey('down',0)">▼</div>
+    <div class="dpad-btn left"  onpointerdown="mzKey('left',1)"  onpointerup="mzKey('left',0)"  onpointerleave="mzKey('left',0)">◄</div>
+    <div class="dpad-btn right" onpointerdown="mzKey('right',1)" onpointerup="mzKey('right',0)" onpointerleave="mzKey('right',0)">►</div>
+  </div>
+  <div class="dialog-box" id="machu-dialog"></div>
+  <button class="next-btn" id="machu-next" onclick="advanceMachu()">Dál →</button>
+  <div class="game-over-text" id="go-machu"></div>
+  <button class="restart-btn" id="restart-machu" style="display:none" onclick="restartGame()">🔄 Zkusit znovu</button>
+</div>
+
+<script>
+/* ── HESLO ── */
+function checkPw() {
+  const v = document.getElementById('pw-input').value.trim().toLowerCase().replace(/\s/g,'');
+  if (v === 'flamkussmrdi') { goScene('1'); }
+  else {
+    const e = document.getElementById('pw-err');
+    e.textContent = 'Špatné heslo! Flamkus se chechtá. ARGH.';
+    document.getElementById('pw-input').value = '';
+    setTimeout(() => e.textContent='', 2500);
+  }
+}
+
+/* ── PŘECHOD ── */
+function goScene(id) {
+  const cur = document.querySelector('.scene.active');
+  if (cur) cur.classList.remove('active');
+  const nxt = document.getElementById('scene-'+id);
+  if (!nxt) return;
+  nxt.classList.add('active','fade-in');
+  setTimeout(()=>nxt.classList.remove('fade-in'),700);
+  if (id==='1')       initScene1();
+  if (id==='fishing') initFishing();
+  if (id==='2v2')     initFrozen();
+  if (id==='3v1')     initSlide();
+  if (id==='3v2')     initRoad();
+  if (id==='4v1')     initJungle();
+  if (id==='4v2')     initMachu();
+  if (id==='final')   initFinal();
+}
+function restartGame() { goScene('1'); }
+
+function makeStars(id) {
+  const s = document.getElementById(id); s.innerHTML='';
+  for (let i=0;i<65;i++) {
+    const d=document.createElement('div'); d.className='star';
+    d.style.left=(Math.random()*100)+'%'; d.style.top=(Math.random()*55)+'%';
+    d.style.animationDelay=(Math.random()*3)+'s'; d.style.animationDuration=(1.5+Math.random()*2)+'s';
+    s.appendChild(d);
+  }
+}
+
+/* ── SCÉNA 1 ── */
+function initScene1() { makeStars('stars'); }
+
+/* ── RYBAŘENÍ ── */
+const FISH_LINES = [
+  'Rybaření? Piratonozka je přece pirát, ne rybář! Ale prut vypadá lákavě... ARRR!',
+  'Krakene, krakene, tož vylez ven, já si tě opecu!',
+  'AAAAAAA KRAKEEEEN!!!',
+];
+let fishStep=0;
+
+function initFishing() {
+  fishStep=0;
+  document.getElementById('kraken').classList.remove('approach');
+  document.getElementById('go-fishing').classList.remove('show');
+  document.getElementById('restart-fishing').style.display='none';
+  document.getElementById('fishing-dialog').textContent=FISH_LINES[0];
+  document.getElementById('fishing-next').style.display='inline-block';
+  // Reset tmavého překryvu
+  const dark=document.getElementById('fishing-dark');
+  dark.style.transition='none'; dark.style.background='rgba(0,15,50,0)';
+  // Reset pozice piratonozky
+  const fp=document.getElementById('fishing-pirat');
+  fp.style.transition='none'; fp.style.left='50%'; fp.style.bottom='31%'; fp.style.transform='translateX(-50%)'; fp.style.opacity='1';
+  // Reset prutu
+  const rod=document.getElementById('fishing-rod');
+  rod.style.transition='none'; rod.style.transform='translateX(-50%) rotate(15deg)'; rod.style.opacity='1'; rod.style.animation='none';
+  void rod.offsetWidth; rod.style.animation='';
+  makeStars('stars2');
+}
+function advanceFishing() {
+  fishStep++;
+  const dlg=document.getElementById('fishing-dialog');
+  const nxt=document.getElementById('fishing-next');
+  const kr=document.getElementById('kraken');
+  if (fishStep < FISH_LINES.length) {
+    dlg.textContent = FISH_LINES[fishStep];
+    if (fishStep===2) {
+      nxt.style.display='none';
+      // Piratonozka uteče do levého horního rohu
+      const fp=document.getElementById('fishing-pirat');
+      const rod=document.getElementById('fishing-rod');
+      // Nejdřív spustíme krakena a ztmavíme
+      setTimeout(()=>{
+        document.getElementById('fishing-dark').style.background='rgba(0,15,50,0.78)';
+        void kr.offsetWidth; kr.classList.add('approach');
+      }, 600);
+      // Až kraken dosáhne ~50% (~2.6s) piratonozka uteče a prut odletí doprava nahoru
+      setTimeout(()=>{
+        fp.style.left='8%'; fp.style.bottom='68%'; fp.style.transform='translateX(0)';
+        // Nejdřív zrušíme CSS animaci prutu, pak přidáme transition a odletíme
+        rod.style.animation='none';
+        void rod.offsetWidth;
+        rod.style.transition='left 1.4s ease, bottom 1.4s ease, transform 1.4s ease, opacity 1.2s ease';
+        rod.style.left='140%';
+        rod.style.bottom='90%';
+        rod.style.transform='translateX(0) rotate(120deg)';
+        rod.style.opacity='0';
+      }, 2800);
+      setTimeout(()=>{ dlg.textContent='bllblblbl... KRAKEN... obří...... MOP?!... blublblbl...'; }, 4500);
+      setTimeout(()=>{
+        document.getElementById('go-fishing').classList.add('show');
+        dlg.textContent='Jsi IMPOSTOR! Piratonozka by se přece nehnal za krakenem — vždyť kraken nenosí ponožky! ARGH!';
+        document.getElementById('restart-fishing').style.display='inline-block';
+      }, 8500);
+    }
+  }
+}
+
+/* ── ZAMRZLÝ OSTROV ── */
+const FROZEN_LINES=[
+  'Na ostrov? Jo jo... ale Pirátonožka přece neumí plavat! A poklad se do ledu nezakopává!',
+  'Brrrr... tady je ale zima... se nějak ochladilo...',
+  'Paty mi tuhnou... A ruce... A nos... Toto místo se mi vůbec nelíbí. ARRR...',
+];
+let frozenStep=0;
+function initFrozen() {
+  frozenStep=0;
+  document.getElementById('go-frozen').classList.remove('show');
+  document.getElementById('restart-frozen').style.display='none';
+  document.getElementById('frozen-dialog').textContent=FROZEN_LINES[0];
+  document.getElementById('frozen-next').style.display='inline-block';
+  const snow=document.getElementById('snow'); snow.innerHTML='';
+  const fl=['❄','❅','❆','✦','·'];
+  for (let i=0;i<55;i++) {
+    const f=document.createElement('span'); f.className='snowflake';
+    f.textContent=fl[Math.floor(Math.random()*fl.length)];
+    f.style.left=(Math.random()*100)+'vw';
+    f.style.animationDuration=(4+Math.random()*6)+'s';
+    f.style.animationDelay=(Math.random()*5)+'s';
+    f.style.fontSize=(8+Math.random()*10)+'px';
+    snow.appendChild(f);
+  }
+}
+function advanceFrozen() {
+  frozenStep++;
+  const dlg=document.getElementById('frozen-dialog');
+  if (frozenStep<FROZEN_LINES.length) {
+    dlg.textContent=FROZEN_LINES[frozenStep];
+  } else {
+    document.getElementById('frozen-next').style.display='none';
+    document.getElementById('go-frozen').classList.add('show');
+    dlg.textContent='Na ostrov bez mapy a v ledu? To by pravý Pirátonožka nikdy neudělal — poklad se přece nezakopává do zamrzlého jezera! JSI IMPOSTOR!!';
+    document.getElementById('restart-frozen').style.display='inline-block';
+  }
+}
+
+/* ── HŘIŠTĚ ── */
+let slideStep=0;
+function initSlide() {
+  slideStep=0;
+  const pirat=document.getElementById('pirat-slide');
+  const socks=document.getElementById('socks-img');
+  const hand=document.getElementById('hand-img');
+  ['go-slide','slide-dialog','slide-next','restart-slide'].forEach(id=>{
+    const el=document.getElementById(id);
+    if (id==='go-slide') { el.classList.remove('show'); }
+    else el.style.display='none';
+  });
+  socks.style.opacity='0'; socks.style.transition='none';
+  hand.style.transition='none'; hand.style.left='-220px';
+  pirat.style.animation='none'; void pirat.offsetWidth; pirat.style.animation='';
+  setTimeout(()=>{
+    document.getElementById('slide-dialog').style.display='block';
+    document.getElementById('slide-dialog').textContent='Pirátonožka se klouzal, klouzal a klouzal... až úplně zapomněl hlídat ponožky.';
+    socks.style.transition='opacity .5s ease'; socks.style.opacity='1';
+    document.getElementById('slide-next').style.display='inline-block';
+  },3000);
+}
+function advanceSlide() {
+  slideStep++;
+  const socks=document.getElementById('socks-img');
+  const hand=document.getElementById('hand-img');
+  const dlg=document.getElementById('slide-dialog');
+  document.getElementById('slide-next').style.display='none';
+  dlg.textContent='Až mu někdo ukradl celý poklad!';
+  setTimeout(()=>{ hand.style.transition='left 1.1s ease'; hand.style.left='-8%'; },600);
+  setTimeout(()=>{ socks.style.transition='opacity .3s ease'; socks.style.opacity='0'; hand.style.left='-220px'; },2100);
+  setTimeout(()=>{
+    document.getElementById('go-slide').classList.add('show');
+    dlg.textContent='Ha! Klouzačka před pokladem — a ještě se nechat takhle oloupit! Správný Pirátonožka by šel rovnou kopat, ne se klouzat! JSI IMPOSTOR!!';
+    document.getElementById('restart-slide').style.display='inline-block';
+  },3500);
+}
+
+/* ══════════════════════════════════════════
+   SCÉNA 3v2 – CESTA + MINIHRA
+══════════════════════════════════════════ */
+let roadStep=0;
+let roadPath='';
+let dragonDefeated=false;
+
+function initRoad() {
+  roadStep=0; roadPath='';
+  // Reset DOM
+  const dhl=document.getElementById('dhl-truck');
+  dhl.src='src/Dhl.png';
+  dhl.style.transition='none';
+  dhl.style.right='0'; dhl.style.left='auto';
+  dhl.style.transform='translateX(80px)';
+  dhl.style.bottom='30%';
+  dhl.onclick=clickDhl;
+  if (dragonDefeated) {
+    dhl.style.display='none';
+  } else {
+    dhl.style.display='block';
+  }
+
+  const pirat=document.getElementById('pirat-road');
+  pirat.style.transition='none';
+  pirat.style.left='50%'; pirat.style.bottom='28%';
+  pirat.style.transform='translateX(-50%)';
+  pirat.style.display='block';
+
+  document.getElementById('road-choices').style.display='flex';
+  document.getElementById('road-dialog').style.display='none';
+  document.getElementById('road-next').style.display='none';
+  document.getElementById('go-road').classList.remove('show');
+  document.getElementById('go-road').textContent='';
+  document.getElementById('restart-road').style.display='none';
+  document.getElementById('game-canvas').style.display='none';
+  document.getElementById('hp-bars').classList.remove('visible');
+  document.getElementById('mobile-ctrl').classList.remove('visible');
+  document.getElementById('game-hint').style.display='none';
+  stopGame();
+}
+
+/* ── Výběr cesty (přejetí dodávkou) ── */
+const ROAD_RUNOVER = [
+  { road:'Po silnici se chodí pěšky, Pirátonožka kráčí sebejistě...', forest:'Lesní cestou to zkouší Pirátonožka, bzučí hmyz, vůně jehličí...' },
+  null, // přejede dodávka
+  '', // text se nastaví dynamicky podle cesty
+];
+let roadRunStep=0;
+
+function choosePath(path) {
+  if (path==='road')   { goScene('4v1'); return; }
+  if (path==='forest') { goScene('4v2'); return; }
+}
+
+function advanceRoad() {
+  roadRunStep++;
+  const pirat=document.getElementById('pirat-road');
+  const dhl=document.getElementById('dhl-truck');
+  const dlg=document.getElementById('road-dialog');
+  const nxt=document.getElementById('road-next');
+
+  if (roadRunStep===1) {
+    // Piratonozka se vydá cestou
+    nxt.style.display='none';
+    dlg.textContent='';
+    pirat.style.transition='left 2s ease, bottom 2s ease';
+    if (roadPath==='road') {
+      pirat.style.left='8%'; pirat.style.bottom='65%'; pirat.style.transform='translateX(0)';
+    } else {
+      pirat.style.left='62%'; pirat.style.bottom='42%'; pirat.style.transform='translateX(0)';
+    }
+    // Dodávka přijede zprava a přejede přes něj
+    setTimeout(()=>{
+      dhl.style.transition='none';
+      dhl.style.right='auto'; dhl.style.left='0';
+      dhl.style.transform='translateX(110vw)';
+      dhl.style.bottom=(roadPath==='road'?'60%':'38%');
+      void dhl.offsetWidth;
+      dhl.style.transition='transform 1.8s linear';
+      dhl.style.transform='translateX(-110vw)';
+    },1500);
+    // Piratonozka se srazí a padne
+    setTimeout(()=>{
+      pirat.style.transition='transform .3s ease';
+      pirat.style.transform='rotate(-90deg)';
+    },2600);
+    setTimeout(()=>{
+      dlg.textContent = roadPath==='road'
+        ? 'Piratonozka by si všiml číhající nestvůry a nenechal by se přepadnout — ty jsi IMPOSTOR!'
+        : 'Piratonozka by si všiml číhající nestvůry a nenechal by se přepadnout — ty jsi IMPOSTOR!';
+      document.getElementById('go-road').textContent='☠️ JSI IMPOSTOR! ☠️';
+      document.getElementById('go-road').classList.add('show');
+      document.getElementById('restart-road').style.display='inline-block';
+    },3800);
+  }
+}
+
+/* ── Kliknutí na dodávku ── */
+const CHALLENGE_STEPS=[
+  'Aha obluda špinavá, vylez ven a bojuj!',
+  'VRRRRRRR...',
+  '🐉 POZOOR! Je to drak! 🐉',
+];
+let chalStep=0;
+
+function clickDhl() {
+  chalStep=0;
+  document.getElementById('road-choices').style.display='none';
+  const dlg=document.getElementById('road-dialog'); dlg.style.display='block';
+  dlg.textContent=CHALLENGE_STEPS[0];
+  document.getElementById('road-next').style.display='inline-block';
+  document.getElementById('road-next').onclick=advanceChallenge;
+
+  // Piratonozka přejde doleva
+  const pirat=document.getElementById('pirat-road');
+  pirat.style.transition='left 1.5s ease, bottom 1.5s ease';
+  pirat.style.left='14%'; pirat.style.bottom='32%'; pirat.style.transform='translateX(0)';
+}
+
+function advanceChallenge() {
+  chalStep++;
+  const dlg=document.getElementById('road-dialog');
+  const dhl=document.getElementById('dhl-truck');
+  const nxt=document.getElementById('road-next');
+
+  if (chalStep===1) {
+    // Dodávka vyjede na střed
+    dhl.style.transition='transform 1.2s ease';
+    dhl.style.transform='translateX(0)';
+    dlg.textContent=CHALLENGE_STEPS[1];
+  } else if (chalStep===2) {
+    // Změní se na draka
+    dhl.src='src/DhlDragon.png';
+    dlg.textContent=CHALLENGE_STEPS[2];
+  } else if (chalStep===3) {
+    nxt.style.display='none';
+    dlg.style.display='none';
+    dhl.style.display='none';
+    document.getElementById('pirat-road').style.display='none';
+    startGame();
+  }
+}
+
+/* ══════════════════════════════════════════
+   MINIHRA – DRAK
+══════════════════════════════════════════ */
+const piratImg=new Image(); piratImg.src='src/profile.png';
+const dragonImg=new Image(); dragonImg.src='src/DhlDragon.png';
+
+let canvas, ctx;
+let gRunning=false, gFrameId=null;
+let gLastTime=0;
+const gKeys={};
+let attackCD=false;
+
+const GP={}, GD={};
+let gProj=[], gSlash=[], gExplosions=[];
+let gHitFlash=0, gDragonAngle=0, gDragonShootT=0;
+
+function gk(code,on) { gKeys[code]=!!on; }
+document.addEventListener('keydown',e=>{gKeys[e.code]=true; if(e.code==='Space')e.preventDefault();});
+document.addEventListener('keyup',e=>{gKeys[e.code]=false;});
+
+function startGame() {
+  canvas=document.getElementById('game-canvas');
+  canvas.width=window.innerWidth; canvas.height=window.innerHeight;
+  ctx=canvas.getContext('2d');
+  canvas.style.display='block';
+  document.getElementById('hp-bars').classList.add('visible');
+
+  const isMobile='ontouchstart' in window||navigator.maxTouchPoints>0;
+  if (isMobile) document.getElementById('mobile-ctrl').classList.add('visible');
+  document.getElementById('game-hint').style.display='block';
+
+  GP.x=80; GP.y=canvas.height/2-40; GP.w=80; GP.h=80; GP.hp=5; GP.maxHp=5; GP.inv=0;
+  GD.x=canvas.width-220; GD.y=canvas.height/3; GD.w=160; GD.h=120; GD.hp=5; GD.maxHp=5; GD.baseY=canvas.height/3;
+  gProj=[]; gSlash=[]; gExplosions=[];
+  gDragonAngle=0; gDragonShootT=0; gHitFlash=0;
+  attackCD=false;
+  updateHearts();
+  gRunning=true; gLastTime=performance.now();
+  gFrameId=requestAnimationFrame(gameLoop);
+}
+
+function stopGame() {
+  gRunning=false;
+  if (gFrameId) { cancelAnimationFrame(gFrameId); gFrameId=null; }
+  if (canvas) canvas.style.display='none';
+  document.getElementById('hp-bars').classList.remove('visible');
+  document.getElementById('mobile-ctrl').classList.remove('visible');
+}
+
+function gameLoop(ts) {
+  if (!gRunning) return;
+  const dt=Math.min(ts-gLastTime,50); gLastTime=ts;
+  update(dt);
+  draw();
+  gFrameId=requestAnimationFrame(gameLoop);
+}
+
+function update(dt) {
+  const spd=3;
+  if (gKeys['KeyW']||gKeys['ArrowUp'])    GP.y-=spd;
+  if (gKeys['KeyS']||gKeys['ArrowDown'])  GP.y+=spd;
+  if (gKeys['KeyA']||gKeys['ArrowLeft'])  GP.x-=spd;
+  if (gKeys['KeyD']||gKeys['ArrowRight']) GP.x+=spd;
+  GP.x=Math.max(0,Math.min(canvas.width-GP.w,GP.x));
+  GP.y=Math.max(0,Math.min(canvas.height-GP.h,GP.y));
+  if (GP.inv>0) GP.inv-=dt;
+
+  // Attack
+  if ((gKeys['Space'])&&!attackCD) {
+    attackCD=true; setTimeout(()=>attackCD=false,450);
+    gSlash.push({x:GP.x+GP.w,y:GP.y+GP.h/2,t:Date.now()});
+    const dx=(GD.x+GD.w/2)-(GP.x+GP.w/2);
+    const dy=(GD.y+GD.h/2)-(GP.y+GP.h/2);
+    if (Math.sqrt(dx*dx+dy*dy)<120) {
+      GD.hp=Math.max(0,GD.hp-1); updateHearts();
+      if (GD.hp<=0) { gameWin(); return; }
+    }
+  }
+
+  // Dragon movement
+  gDragonAngle+=0.018;
+  GD.y=GD.baseY+Math.sin(gDragonAngle)*90;
+  GD.y=Math.max(40,Math.min(canvas.height-GD.h-40,GD.y));
+
+  // Dragon shoot
+  gDragonShootT+=dt;
+  if (gDragonShootT>2600) {
+    gDragonShootT=0;
+    const tx=GP.x+GP.w/2, ty=GP.y+GP.h/2;
+    const ox=GD.x, oy=GD.y+GD.h/2;
+    const dist=Math.sqrt((tx-ox)**2+(ty-oy)**2);
+    gProj.push({x:ox,y:oy,vx:5*(tx-ox)/dist,vy:5*(ty-oy)/dist,r:13});
+  }
+
+  // Move projectiles + hit check
+  gProj=gProj.filter(p=>{
+    p.x+=p.vx; p.y+=p.vy;
+    if (p.x<-50||p.x>canvas.width+50||p.y<-50||p.y>canvas.height+50) return false;
+    if (GP.inv<=0) {
+      const dx=p.x-(GP.x+GP.w/2), dy=p.y-(GP.y+GP.h/2);
+      if (Math.sqrt(dx*dx+dy*dy)<p.r+32) {
+        GP.hp=Math.max(0,GP.hp-1); GP.inv=800; gHitFlash=Date.now();
+        updateHearts();
+        if (GP.hp<=0) { gameLose(); return false; }
+        return false;
+      }
+    }
+    return true;
+  });
+
+  // Slash cleanup
+  gSlash=gSlash.filter(s=>Date.now()-s.t<400);
+  // Explosion cleanup
+  gExplosions=gExplosions.filter(e=>Date.now()-e.t<900);
+}
+
+function draw() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  // Explosions
+  gExplosions.forEach(e=>{
+    const prog=(Date.now()-e.t)/900;
+    const r=e.startR+(e.maxR-e.startR)*prog;
+    const a=1-prog;
+    ctx.beginPath(); ctx.arc(e.x,e.y,r,0,Math.PI*2);
+    ctx.fillStyle=`rgba(255,${Math.floor(150*(1-prog))},0,${a})`; ctx.fill();
+    ctx.beginPath(); ctx.arc(e.x,e.y,r*.55,0,Math.PI*2);
+    ctx.fillStyle=`rgba(255,230,0,${a*.8})`; ctx.fill();
+  });
+
+  // Dragon
+  ctx.drawImage(dragonImg,GD.x,GD.y,GD.w,GD.h);
+
+  // Projectiles
+  gProj.forEach(p=>{
+    const g=ctx.createRadialGradient(p.x,p.y,2,p.x,p.y,p.r);
+    g.addColorStop(0,'rgba(255,240,80,1)');
+    g.addColorStop(.5,'rgba(255,120,0,.9)');
+    g.addColorStop(1,'rgba(255,60,0,0)');
+    ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    ctx.fillStyle=g; ctx.fill();
+  });
+
+  // Pirat (bliká při zásahu)
+  if (GP.inv<=0||Math.floor(GP.inv/80)%2===0) {
+    ctx.drawImage(piratImg,GP.x,GP.y,GP.w,GP.h);
+  }
+
+  // Slash
+  gSlash.forEach(s=>{
+    const a=1-(Date.now()-s.t)/400;
+    ctx.save(); ctx.strokeStyle=`rgba(255,220,50,${a})`; ctx.lineWidth=5;
+    ctx.beginPath(); ctx.moveTo(s.x-5,s.y-28); ctx.lineTo(s.x+28,s.y+18); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(s.x+8,s.y-28); ctx.lineTo(s.x+38,s.y+8); ctx.stroke();
+    ctx.restore();
+  });
+
+  // Hit flash
+  if (Date.now()-gHitFlash<400) {
+    const a=.35*(1-(Date.now()-gHitFlash)/400);
+    ctx.fillStyle=`rgba(255,0,0,${a})`; ctx.fillRect(0,0,canvas.width,canvas.height);
+  }
+}
+
+function updateHearts() {
+  ['pirat','dragon'].forEach(who=>{
+    const el=document.getElementById(who+'-hearts');
+    const obj=who==='pirat'?GP:GD;
+    el.innerHTML='';
+    for (let i=0;i<obj.maxHp;i++) {
+      const sp=document.createElement('span');
+      sp.textContent=i<obj.hp?'❤️':'🖤';
+      el.appendChild(sp);
+    }
+  });
+}
+
+function shake() {
+  canvas.style.animation='none'; void canvas.offsetWidth;
+  canvas.style.animation='canvasShake .6s ease';
+  setTimeout(()=>canvas.style.animation='',600);
+}
+
+function addExplosion(x,y,big) {
+  gExplosions.push({x,y,startR:big?40:20,maxR:big?220:140,t:Date.now()});
+}
+
+function gameWin() {
+  gRunning=false;
+  dragonDefeated=true;
+  addExplosion(GD.x+GD.w/2,GD.y+GD.h/2,true);
+  shake();
+  // render a chvíli pokračovat kvůli explozi
+  let end=Date.now()+1500;
+  (function renderEnd(){
+    if (Date.now()<end){ draw(); requestAnimationFrame(renderEnd); }
+    else {
+      stopGame();
+      initRoad();
+      const dlg=document.getElementById('road-dialog');
+      dlg.style.display='block';
+      dlg.textContent='Drak poražen! Cesta je volná — ARRR! Teď rychle pro poklad!';
+    }
+  })();
+}
+
+function gameLose() {
+  gRunning=false;
+  addExplosion(GP.x+GP.w/2,GP.y+GP.h/2,false);
+  shake();
+  let end=Date.now()+1500;
+  (function renderEnd(){
+    if (Date.now()<end){ draw(); requestAnimationFrame(renderEnd); }
+    else {
+      stopGame();
+      const go=document.getElementById('go-road');
+      go.textContent='☠️ Prohrát s drakem — impostor jsi! ☠️';
+      go.classList.add('show');
+      document.getElementById('restart-road').style.display='inline-block';
+    }
+  })();
+}
+
+/* ══════════════════════════════════════════
+   SCÉNA 4v1 · DŽUNGLE — VĚTVIČKY
+══════════════════════════════════════════ */
+const JUNGLE_LINES = [
+  'Jééé, cesta! Konečně na pevné zemi — tohle musí být ta správná stezka k pokladu! ARRR!',
+  'Ale... počkejte... to tu zarůstá! Liana napravo, liana nalevo — PROSEKÁM SE! 🌿',
+];
+let jungleStep=0;
+const BRANCH_COUNT=10, BRANCH_MS=3000, BRANCH_MAX_MISS=3;
+let jMisses=0, jClicked=0, jTotal=0, jRunning=false, jSpawnTimer=null;
+
+function initJungle() {
+  jungleStep=0; jMisses=0; jClicked=0; jTotal=0; jRunning=false;
+  clearTimeout(jSpawnTimer);
+  // Reset liana paths (restart CSS animation by cloning SVG children)
+  const svg=document.getElementById('liana-svg');
+  svg.querySelectorAll('path,circle').forEach(el=>{
+    el.style.animation='none'; void el.offsetWidth; el.style.animation='';
+  });
+  document.getElementById('branch-game').style.display='none';
+  document.getElementById('branch-area').innerHTML='';
+  document.getElementById('branch-miss').textContent='❌ 0 / 3';
+  document.getElementById('go-jungle').classList.remove('show');
+  document.getElementById('go-jungle').textContent='';
+  document.getElementById('restart-jungle').style.display='none';
+  document.getElementById('jungle-win-btn').style.display='none';
+  document.getElementById('jungle-next').style.display='inline-block';
+  document.getElementById('jungle-next').onclick=advanceJungle;
+  document.getElementById('jungle-dialog').textContent=JUNGLE_LINES[0];
+  // Remove any stacked branches from lose state
+  document.querySelectorAll('#scene-4v1 .branch-item.lose-branch').forEach(b=>b.remove());
+}
+
+function advanceJungle() {
+  jungleStep++;
+  if (jungleStep===1) {
+    document.getElementById('jungle-dialog').textContent=JUNGLE_LINES[1];
+    document.getElementById('jungle-next').style.display='none';
+    setTimeout(startBranchGame, 2800);
+  }
+}
+
+function startBranchGame() {
+  jRunning=true;
+  document.getElementById('branch-game').style.display='block';
+  scheduleNextBranch(400);
+}
+
+function scheduleNextBranch(delay) {
+  if (!jRunning||jTotal>=BRANCH_COUNT) return;
+  jSpawnTimer=setTimeout(spawnBranch, delay);
+}
+
+function spawnBranch() {
+  if (!jRunning) return;
+  jTotal++;
+  const area=document.getElementById('branch-area');
+  const el=document.createElement('div');
+  el.className='branch-item';
+  el.style.left=(8+Math.random()*66)+'%';
+  el.style.top=(15+Math.random()*52)+'%';
+  el.style.transform='rotate('+(Math.random()*140-70)+'deg)';
+  const bar=document.createElement('div');
+  bar.className='branch-timer-bar';
+  el.appendChild(bar);
+  area.appendChild(el);
+
+  const missTimer=setTimeout(()=>{
+    if (!el.parentNode) return;
+    el.remove();
+    jMisses++;
+    document.getElementById('branch-miss').textContent='❌ '+jMisses+' / 3';
+    if (jMisses>BRANCH_MAX_MISS) branchLose();
+    else checkBranchEnd();
+  }, BRANCH_MS);
+
+  el.addEventListener('pointerdown',()=>{
+    clearTimeout(missTimer);
+    el.remove();
+    jClicked++;
+    checkBranchEnd();
+  },{once:true});
+
+  const nextDelay=Math.max(350, 1100-jTotal*65);
+  scheduleNextBranch(nextDelay);
+}
+
+function checkBranchEnd() {
+  if (!jRunning) return;
+  if (jClicked+jMisses>=BRANCH_COUNT) branchWin();
+}
+
+function branchWin() {
+  jRunning=false;
+  document.getElementById('branch-game').style.display='none';
+  document.getElementById('jungle-dialog').textContent='Prosekal jsem se! ARRR! Cesta je volná — vpřed za pokladem!';
+  document.getElementById('jungle-win-btn').style.display='inline-block';
+}
+
+function branchLose() {
+  jRunning=false; clearTimeout(jSpawnTimer);
+  document.getElementById('branch-game').style.display='none';
+  // Přidat větvičky na piratonozku
+  const scene=document.getElementById('scene-4v1');
+  [{l:'38%',t:'28%',r:-40},{l:'44%',t:'38%',r:20},{l:'36%',t:'45%',r:-60},{l:'46%',t:'52%',r:50},{l:'34%',t:'58%',r:-20}]
+    .forEach(({l,t,r})=>{
+      const b=document.createElement('div');
+      b.className='branch-item lose-branch';
+      b.style.cssText='position:absolute;left:'+l+';top:'+t+';transform:rotate('+r+'deg);pointer-events:none;z-index:30;';
+      scene.appendChild(b);
+    });
+  document.getElementById('go-jungle').textContent='🌿 JSI IMPOSTOR! 🌿';
+  document.getElementById('go-jungle').classList.add('show');
+  document.getElementById('jungle-dialog').textContent='Zamotal jsi se v lianách... Velký Piratonozka by neprohrál s klackem — IMPOSTOR!';
+  document.getElementById('restart-jungle').style.display='inline-block';
+}
+
+function jungleWinNext() { goScene('final'); }
+
+/* ══════════════════════════════════════════
+   SCÉNA 4v2 · MACHU PICCHU — BLUDIŠTĚ
+══════════════════════════════════════════ */
+const MAZE_GRID=[
+  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+  [1,0,0,0,1,0,0,0,0,0,1,0,0,0,1],
+  [1,0,1,0,1,0,1,1,1,0,1,0,1,0,1],
+  [1,0,1,0,0,0,1,0,0,0,0,0,1,0,1],
+  [1,0,1,1,1,1,1,0,1,1,1,1,1,0,1],
+  [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+  [1,1,1,0,1,0,1,1,1,0,1,0,1,1,1],
+  [1,0,1,0,1,0,0,0,1,0,1,0,0,0,1],
+  [1,0,1,0,0,0,1,0,1,0,1,1,1,0,1],
+  [1,0,0,0,1,1,1,0,0,0,0,0,0,0,1],
+  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+];
+const MZ_ROWS=11,MZ_COLS=15,MZ_START={r:1,c:1},MZ_EXIT={r:9,c:13};
+let mzCv,mzCtx2,mzPlayer,mzTimeLeft,mzTI,mzMT,mzRunning=false;
+let mzKeys={up:false,down:false,left:false,right:false};
+
+function initMachu() {
+  mzRunning=false; clearInterval(mzTI); clearTimeout(mzMT);
+  machuStep=0;
+  document.getElementById('maze-canvas').style.display='none';
+  document.getElementById('maze-overlay').style.display='none';
+  document.getElementById('maze-mobile').style.display='none';
+  document.getElementById('go-machu').classList.remove('show');
+  document.getElementById('go-machu').textContent='';
+  document.getElementById('restart-machu').style.display='none';
+  document.getElementById('machu-dialog').style.display='block';
+  document.getElementById('machu-dialog').textContent='Kam jsem se to dostal?! Tohle přece není pravá Makču Pikču... Já jsem se snad ztratil — ARRR! Ale moment... vypadá to jak bludiště!';
+  document.getElementById('machu-next').style.display='inline-block';
+  document.getElementById('machu-next').onclick=advanceMachu;
+  mzKeys={up:false,down:false,left:false,right:false};
+}
+
+let machuStep=0;
+function advanceMachu() {
+  machuStep++;
+  if (machuStep===1) {
+    document.getElementById('machu-dialog').textContent='Piratonozka se nikdy neztratí — ale tady bych potřeboval kompas... nebo 20 sekund! ARRR!';
+  } else if (machuStep===2) {
+    document.getElementById('machu-next').style.display='none';
+    document.getElementById('machu-dialog').style.display='none';
+    startMaze();
+    machuStep=0;
+  }
+}
+
+function startMaze() {
+  mzCv=document.getElementById('maze-canvas');
+  const sc=document.getElementById('scene-4v2');
+  mzCv.width=sc.clientWidth||window.innerWidth;
+  mzCv.height=sc.clientHeight||window.innerHeight;
+  mzCv.style.display='block';
+  mzCtx2=mzCv.getContext('2d');
+  mzPlayer={r:MZ_START.r,c:MZ_START.c};
+  mzTimeLeft=20; mzRunning=true;
+  document.getElementById('maze-overlay').style.display='block';
+  document.getElementById('maze-overlay').textContent='⏱ 20s  ·  WASD / šipky — pohyb';
+  if ('ontouchstart' in window||navigator.maxTouchPoints>0)
+    document.getElementById('maze-mobile').style.display='block';
+  drawMaze();
+  mzTI=setInterval(()=>{
+    if (!mzRunning) return;
+    mzTimeLeft--;
+    document.getElementById('maze-overlay').textContent='⏱ '+mzTimeLeft+'s  ·  WASD / šipky';
+    if (mzTimeLeft<=0) mazeLose();
+  },1000);
+  mzMoveLoop();
+}
+
+function mzCS() {
+  return Math.min(Math.floor(mzCv.width/MZ_COLS), Math.floor(mzCv.height/MZ_ROWS));
+}
+
+function drawMaze() {
+  if (!mzCtx2) return;
+  const cs=mzCS();
+  const ox=Math.floor((mzCv.width-cs*MZ_COLS)/2);
+  const oy=Math.floor((mzCv.height-cs*MZ_ROWS)/2);
+  mzCtx2.clearRect(0,0,mzCv.width,mzCv.height);
+  mzCtx2.fillStyle='rgba(8,16,8,.88)';
+  mzCtx2.fillRect(0,0,mzCv.width,mzCv.height);
+  for (let r=0;r<MZ_ROWS;r++) for (let c=0;c<MZ_COLS;c++) {
+    const x=ox+c*cs, y=oy+r*cs;
+    if (MAZE_GRID[r][c]===1) {
+      mzCtx2.fillStyle='#2d4a1e'; mzCtx2.fillRect(x,y,cs,cs);
+      mzCtx2.strokeStyle='rgba(0,0,0,.4)'; mzCtx2.strokeRect(x+.5,y+.5,cs-1,cs-1);
+    } else {
+      mzCtx2.fillStyle='#7a6242'; mzCtx2.fillRect(x,y,cs,cs);
+    }
+  }
+  // Cíl
+  const ex=ox+MZ_EXIT.c*cs, ey=oy+MZ_EXIT.r*cs;
+  mzCtx2.fillStyle='#ffd700'; mzCtx2.fillRect(ex+2,ey+2,cs-4,cs-4);
+  mzCtx2.fillStyle='#000'; mzCtx2.font='bold '+(cs-6)+'px serif';
+  mzCtx2.textAlign='center'; mzCtx2.textBaseline='middle';
+  mzCtx2.fillText('★',ex+cs/2,ey+cs/2);
+  // Hráč
+  const px=ox+mzPlayer.c*cs, py=oy+mzPlayer.r*cs;
+  mzCtx2.fillStyle='#e8a020';
+  mzCtx2.beginPath(); mzCtx2.arc(px+cs/2,py+cs/2,cs*.38,0,Math.PI*2); mzCtx2.fill();
+  mzCtx2.fillStyle='#1a0800'; mzCtx2.font=(cs-8)+'px serif';
+  mzCtx2.fillText('☠',px+cs/2,py+cs/2+1);
+}
+
+function mzDoMove() {
+  if (!mzRunning) return;
+  const moves=[];
+  if (mzKeys.up)    moves.push([-1,0]);
+  if (mzKeys.down)  moves.push([1,0]);
+  if (mzKeys.left)  moves.push([0,-1]);
+  if (mzKeys.right) moves.push([0,1]);
+  if (moves.length) {
+    const [dr,dc]=moves[0];
+    const nr=mzPlayer.r+dr, nc=mzPlayer.c+dc;
+    if (nr>=0&&nr<MZ_ROWS&&nc>=0&&nc<MZ_COLS&&MAZE_GRID[nr][nc]!==1) {
+      mzPlayer={r:nr,c:nc}; drawMaze();
+      if (nr===MZ_EXIT.r&&nc===MZ_EXIT.c) mazeWin();
+    }
+  }
+}
+
+function mzMoveLoop() {
+  if (!mzRunning) return;
+  mzDoMove();
+  mzMT=setTimeout(mzMoveLoop,110);
+}
+
+function mzKey(dir,val) { mzKeys[dir]=!!val; }
+
+function mazeWin() {
+  mzRunning=false; clearInterval(mzTI); clearTimeout(mzMT);
+  mzCv.style.display='none';
+  document.getElementById('maze-overlay').style.display='none';
+  document.getElementById('maze-mobile').style.display='none';
+  document.getElementById('machu-dialog').style.display='block';
+  document.getElementById('machu-dialog').textContent='Prošel jsem! A tamhle... to přece je MAKČU PIKČU! TA PRAVÁ! 🏔️ ARRRR!';
+  document.getElementById('machu-next').textContent='Vpřed! →';
+  document.getElementById('machu-next').style.display='inline-block';
+  document.getElementById('machu-next').onclick=machuWinNext;
+}
+
+function mazeLose() {
+  mzRunning=false; clearInterval(mzTI); clearTimeout(mzMT);
+  mzCv.style.display='none';
+  document.getElementById('maze-overlay').style.display='none';
+  document.getElementById('maze-mobile').style.display='none';
+  document.getElementById('machu-dialog').style.display='block';
+  document.getElementById('machu-dialog').textContent='Pirátonožka se ztratit se svým kompasem? To sotva — IMPOSTOR jsi!';
+  document.getElementById('go-machu').textContent='☠️ JSI IMPOSTOR! ☠️';
+  document.getElementById('go-machu').classList.add('show');
+  document.getElementById('restart-machu').style.display='inline-block';
+}
+
+function machuWinNext() { goScene('final'); }
+
+// Klávesnice pro bludiště (šipky + WASD)
+window.addEventListener('keydown',e=>{
+  if (!mzRunning) return;
+  if (e.key==='ArrowUp'   ||e.key==='w'||e.key==='W') mzKeys.up=true;
+  if (e.key==='ArrowDown' ||e.key==='s'||e.key==='S') mzKeys.down=true;
+  if (e.key==='ArrowLeft' ||e.key==='a'||e.key==='A') mzKeys.left=true;
+  if (e.key==='ArrowRight'||e.key==='d'||e.key==='D') mzKeys.right=true;
+  if (e.key.startsWith('Arrow')) e.preventDefault();
+});
+window.addEventListener('keyup',e=>{
+  if (e.key==='ArrowUp'   ||e.key==='w'||e.key==='W') mzKeys.up=false;
+  if (e.key==='ArrowDown' ||e.key==='s'||e.key==='S') mzKeys.down=false;
+  if (e.key==='ArrowLeft' ||e.key==='a'||e.key==='A') mzKeys.left=false;
+  if (e.key==='ArrowRight'||e.key==='d'||e.key==='D') mzKeys.right=false;
+});
+
+/* ── Finální scéna ── */
+function initFinal() {
+  document.getElementById('sock-fullscreen').classList.remove('open');
+}
+function openSock() {
+  document.getElementById('sock-fullscreen').classList.add('open');
+}
+function closeSockRestart() {
+  document.getElementById('sock-fullscreen').classList.remove('open');
+  restartGame();
+}
+
+/* Start */
+initScene1();
+</script>
+</body>
+</html>
