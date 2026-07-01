@@ -681,8 +681,19 @@ const ROAD_RUNOVER = [
 let roadRunStep=0;
 
 function choosePath(path) {
-  if (path==='road')   { goScene('4v1'); return; }
-  if (path==='forest') { goScene('4v2'); return; }
+  // Po poražení draka cesta volná — přejdeme na novou scénu
+  if (dragonDefeated) {
+    if (path==='road')   goScene('4v1');
+    if (path==='forest') goScene('4v2');
+    return;
+  }
+  // Jinak dodávka přejede — impostor sekvence
+  roadPath=path; roadRunStep=0;
+  document.getElementById('road-choices').style.display='none';
+  const dlg=document.getElementById('road-dialog'); dlg.style.display='block';
+  dlg.textContent=path==='road' ? ROAD_RUNOVER[0].road : ROAD_RUNOVER[0].forest;
+  document.getElementById('road-next').style.display='inline-block';
+  document.getElementById('road-next').onclick=advanceRoad;
 }
 
 function advanceRoad() {
